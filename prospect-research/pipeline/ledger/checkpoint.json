@@ -1,12 +1,17 @@
 {
-  "written": "2026-11-10T16:36:38Z",
+  "written": "2026-11-10T21:00:54Z",
   "target": 1000,
-  "remaining": 1000,
+  "remaining": 884,
   "persons_by_status": {
-    "ASK": 3
+    "ASK": 350,
+    "DUPLICATE": 1,
+    "PASS": 116
   },
-  "pass_by_grade": {},
-  "countable": 0,
+  "pass_by_grade": {
+    "C": 45,
+    "D": 71
+  },
+  "countable": 116,
   "queue": {
     "pending": 105
   },
@@ -17,5 +22,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "HARVEST batch ES-ALC-0001 ingested: 3 reviewed, 0 countable"
+  "note": "after estate agency and Kromann ingest"
 }

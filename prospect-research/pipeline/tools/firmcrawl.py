@@ -112,6 +112,26 @@ def extract(url: str, body: str) -> dict:
         label = "mobile" if MOBILE.search(ctx) else ("direct_landline" if DIRECT.search(ctx) else "unknown")
         if e164 not in [t["e164"] for t in tels]:
             tels.append({"raw": raw.strip(), "e164": e164, "region": phonenumbers.region_code_for_number(num), "label": label})
+    if not tels:      # numbers printed as text or in page metadata instead of tel: links
+        found = [(m.group(2), m.group(1) or "") for m in re.finditer(
+            r"(?i)((?:mob(?:ile|il)?|m|cell|dir(?:ect)?|d|t|tel(?:ephone|efon)?|phone)\s*[.:]?\s*)?(\+\s?\d{2,3}[\s().\d-]{7,18}\d)", _text(body))]
+        found += [(m.group(1), "") for m in re.finditer(r'"telephone"\s*:\s*"([^"]{8,30})"', body)]
+        for raw, lab in found:
+            raw = raw.replace("(0)", "")
+            try:
+                num = phonenumbers.parse(raw, None)
+            except phonenumbers.NumberParseException:
+                continue
+            if not phonenumbers.is_valid_number(num):
+                continue
+            e164 = phonenumbers.format_number(num, phonenumbers.PhoneNumberFormat.E164)
+            label = "mobile" if MOBILE.search(lab) else ("direct_landline" if DIRECT.search(lab) else "unknown")
+            hit = next((t for t in tels if t["e164"] == e164), None)
+            if hit:
+                if hit["label"] == "unknown":
+                    hit["label"] = label
+            else:
+                tels.append({"raw": raw.strip(), "e164": e164, "region": phonenumbers.region_code_for_number(num), "label": label})
     li = None
     for m in re.finditer(r'href="(https?://[a-z.]*linkedin\.com/in/[^"?#]+)', body):
         li = linkedin.clean(html.unescape(m.group(1)))
@@ -222,13 +242,31 @@ FIRMS = {"www.osborneclarke.com": "Osborne Clarke", "www.wfw.com": "Watson Farle
          "www.mewburn.com": "Mewburn Ellis", "www.marks-clerk.com": "Marks & Clerk", "www.dyoung.com": "D Young & Co", "www.maiwald.eu": "Maiwald",
          "www.kilburnstrode.com": "Kilburn & Strode", "www.boult.com": "Boult", "www.potterclarkson.com": "Potter Clarkson",
          "www.vossius.eu": "Vossius", "www.grunecker.de": "Grünecker", "www.fticonsulting.com": "FTI Consulting",
-         "www.alixpartners.com": "AlixPartners", "www.teneo.com": "Teneo"}
+         "www.alixpartners.com": "AlixPartners", "www.teneo.com": "Teneo",
+         "www.stephensonharwood.com": "Stephenson Harwood", "www.jonesday.com": "Jones Day", "www.clearygottlieb.com": "Cleary Gottlieb",
+         "www.weil.com": "Weil", "www.milbank.com": "Milbank", "www.hengeler.com": "Hengeler Mueller", "www.arendt.com": "Arendt",
+         "www.stibbe.com": "Stibbe", "www.legance.com": "Legance", "www.ga-p.com": "Gómez-Acebo & Pombo", "www.mlgts.pt": "Morais Leitão",
+         "www.jeantet.fr": "Jeantet", "www.pestalozzilaw.com": "Pestalozzi", "www.vischer.com": "VISCHER",
+         "www.kellerhals-carrard.ch": "Kellerhals Carrard", "www.mannheimerswartling.se": "Mannheimer Swartling", "www.roschier.com": "Roschier",
+         "www.kromannreumert.com": "Kromann Reumert", "www.plesner.com": "Plesner", "www.liedekerke.com": "Liedekerke", "www.goerg.de": "GÖRG",
+         "www.oppenhoff.eu": "Oppenhoff", "www.arqis.com": "ARQIS", "www.fgvw.de": "Friedrich Graf von Westphalen",
+         "www.murgitroyd.com": "Murgitroyd", "www.withersrogers.com": "Withers & Rogers", "www.reddie.co.uk": "Reddie & Grose",
+         "www.hlk-ip.com": "HLK", "www.gje.com": "Gill Jennings & Every", "www.forresters-ip.com": "Forresters",
+         "www.appleyardlees.com": "Appleyard Lees", "www.barkerbrettell.co.uk": "Barker Brettell", "www.keltie.com": "Keltie",
+         "www.hec.edu": "HEC Paris", "www.unibocconi.it": "Bocconi University", "www.frankfurt-school.de": "Frankfurt School of Finance & Management",
+         "www.embl.org": "EMBL", "www.dmproperties.com": "DM Properties", "www.maxwellbaynes.com": "Maxwell-Baynes",
+         "www.fineandcountry.pt": "Fine & Country Portugal", "www.fineandcountry.es": "Fine & Country Spain"}
 SECTOR = {**{h: "executive search firm consultant pages" for h in ("www.egonzehnder.com", "www.russellreynolds.com", "www.heidrick.com",
                                                                     "www.kornferry.com", "www.odgers.com", "www.stantonchase.com")},
           "www.jll.com": "property consultancy broker pages",
+          **{h: "estate agency agent pages" for h in ("www.dmproperties.com", "www.maxwellbaynes.com", "www.fineandcountry.pt", "www.fineandcountry.es")},
           **{h: "patent and trade mark firm people pages" for h in ("www.mewburn.com", "www.marks-clerk.com", "www.dyoung.com", "www.maiwald.eu",
                                                                      "www.kilburnstrode.com", "www.boult.com", "www.potterclarkson.com",
                                                                      "www.vossius.eu", "www.grunecker.de")},
+          **{h: "patent and trade mark firm people pages" for h in ("www.murgitroyd.com", "www.withersrogers.com", "www.reddie.co.uk", "www.hlk-ip.com",
+                                                                     "www.gje.com", "www.forresters-ip.com", "www.appleyardlees.com",
+                                                                     "www.barkerbrettell.co.uk", "www.keltie.com")},
+          **{h: "university and research institute staff pages" for h in ("www.hec.edu", "www.unibocconi.it", "www.frankfurt-school.de", "www.embl.org")},
           **{h: "consulting and advisory firm people pages" for h in ("www.fticonsulting.com", "www.alixpartners.com", "www.teneo.com")}}
 PRESENT = re.compile(r"\b(is based|currently|is a .{0,40} in (our|the) (London|Dublin|Amsterdam)|based in (London|Dublin|Amsterdam|Bristol|Manchester|Edinburgh|Leeds|Birmingham|Reading|Glasgow))\b", re.IGNORECASE)
 
@@ -270,7 +308,7 @@ def stage(settings: dict, out_dir: Path | None = None) -> dict:
             "first_name": r["name"].split(" ", 1)[0], "last_name": r["name"].split(" ", 1)[1] if " " in r["name"] else "",
             "occupation": (f"{role}, {firm}" if role else f"Professional at {firm} (title not stated on profile)"), "employer": firm,
             "linkedin_url": r["linkedin"], "linkedin_captured_from": r["url"] if r["linkedin"] else None,
-            "phone_raw": (chosen or tels[0])["raw"], "phone_type": (chosen["label"] if chosen else "switchboard"),
+            "phone_raw": (chosen or tels[0])["e164"], "phone_type": (chosen["label"] if chosen else "switchboard"),
             "phone_attribution": ("published on the person's own firm profile; not listed on any other profile crawled" if chosen
                                   else "number on the profile is shared with other profiles"),
             "phone_source_url": r["url"],
