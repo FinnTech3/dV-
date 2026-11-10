@@ -254,10 +254,12 @@ FIRMS = {"www.osborneclarke.com": "Osborne Clarke", "www.wfw.com": "Watson Farle
          "www.hlk-ip.com": "HLK", "www.gje.com": "Gill Jennings & Every", "www.forresters-ip.com": "Forresters",
          "www.appleyardlees.com": "Appleyard Lees", "www.barkerbrettell.co.uk": "Barker Brettell", "www.keltie.com": "Keltie",
          "www.hec.edu": "HEC Paris", "www.unibocconi.it": "Bocconi University", "www.frankfurt-school.de": "Frankfurt School of Finance & Management",
-         "www.embl.org": "EMBL"}
+         "www.embl.org": "EMBL", "www.dmproperties.com": "DM Properties", "www.maxwellbaynes.com": "Maxwell-Baynes",
+         "www.fineandcountry.pt": "Fine & Country Portugal", "www.fineandcountry.es": "Fine & Country Spain"}
 SECTOR = {**{h: "executive search firm consultant pages" for h in ("www.egonzehnder.com", "www.russellreynolds.com", "www.heidrick.com",
                                                                     "www.kornferry.com", "www.odgers.com", "www.stantonchase.com")},
           "www.jll.com": "property consultancy broker pages",
+          **{h: "estate agency agent pages" for h in ("www.dmproperties.com", "www.maxwellbaynes.com", "www.fineandcountry.pt", "www.fineandcountry.es")},
           **{h: "patent and trade mark firm people pages" for h in ("www.mewburn.com", "www.marks-clerk.com", "www.dyoung.com", "www.maiwald.eu",
                                                                      "www.kilburnstrode.com", "www.boult.com", "www.potterclarkson.com",
                                                                      "www.vossius.eu", "www.grunecker.de")},
