@@ -60,7 +60,7 @@ Source: [Le News](https://lenews.ch/2017/06/29/new-figures-reveal-british-are-sc
 **Not done.** Queued for all 15 cities.
 
 ## Events, 10 November 2026 to 10 February 2027
-**None verified.** One search across four chambers returned no event with a confirmed date inside the window. Leads seen, not confirmed for the window: the German-British Chamber's recurring members' New Year reception ([event page](https://grossbritannien.ahk.de/en/events/event-details/members-new-years-reception-3), no 2027 date seen) and the British-Swiss Chamber's [upcoming events page](https://bscc.info/events/upcoming-events) (not opened). No speaker or attendee lists were looked for. Queued.
+15 events verified on organisers' pages for Spain, Portugal and Germany; none yet for France or Switzerland. See [events.md](events.md).
 
 ## Next
 `python -m pipeline.tools.cli status` shows 60 non-personal tasks pending and 45 person-level tasks waiting on the gate.
