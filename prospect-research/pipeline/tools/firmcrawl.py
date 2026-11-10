@@ -61,6 +61,7 @@ CITIES = ["Frankfurt", "Munich", "München", "Berlin", "Hamburg", "Düsseldorf",
           "Zug", "Bern", "Milan", "Milano", "Rome", "Roma", "Brussels", "Bruxelles", "Luxembourg", "Vienna", "Wien", "Warsaw",
           "Prague", "Budapest", "Stockholm", "Copenhagen", "Helsinki", "Athens", "Bucharest", "Sofia", "Bratislava", "Zagreb",
           "Ljubljana", "Antwerp", "Turin", "Torino", "Krakow", "Gothenburg", "Malmö", "Aarhus", "Vilnius", "Riga", "Tallinn"]
+CITY_COUNTRY = {"Frankfurt": "DE", "Munich": "DE", "München": "DE", "Berlin": "DE", "Hamburg": "DE", "Düsseldorf": "DE", "Dusseldorf": "DE", "Cologne": "DE", "Köln": "DE", "Stuttgart": "DE", "Paris": "FR", "Lyon": "FR", "Bordeaux": "FR", "Toulouse": "FR", "Marseille": "FR", "Madrid": "ES", "Barcelona": "ES", "Valencia": "ES", "Málaga": "ES", "Malaga": "ES", "Alicante": "ES", "Sevilla": "ES", "Seville": "ES", "Bilbao": "ES", "Lisbon": "PT", "Lisboa": "PT", "Porto": "PT", "Zurich": "CH", "Zürich": "CH", "Geneva": "CH", "Genève": "CH", "Lausanne": "CH", "Basel": "CH", "Zug": "CH", "Bern": "CH", "Milan": "IT", "Milano": "IT", "Rome": "IT", "Roma": "IT", "Turin": "IT", "Torino": "IT", "Brussels": "BE", "Bruxelles": "BE", "Antwerp": "BE", "Luxembourg": "LU", "Vienna": "AT", "Wien": "AT", "Warsaw": "PL", "Krakow": "PL", "Prague": "CZ", "Budapest": "HU", "Stockholm": "SE", "Gothenburg": "SE", "Malmö": "SE", "Copenhagen": "DK", "Aarhus": "DK", "Helsinki": "FI", "Athens": "GR", "Bucharest": "RO", "Sofia": "BG", "Bratislava": "SK", "Zagreb": "HR", "Ljubljana": "SI", "Vilnius": "LT", "Riga": "LV", "Tallinn": "EE"}
 CITY = re.compile(r"\b(" + "|".join(map(re.escape, CITIES)) + r")\b")
 
 
@@ -304,6 +305,9 @@ def stage(settings: dict, out_dir: Path | None = None) -> dict:
         ev = lambda c, lv, ext, lim, **kw: {"criterion": c, "level": lv, "source_url": r["url"], "organisation": firm, "reliability": "PRIMARY",
                                            "publication_date": None, "retrieval_date": r["fetched"][:10], "extract": ext, "limitations": lim, **kw}
         role = (r["role"] or "").strip()
+        if (len(role) < 4 or role.lower() == firm.lower() or role.lower() in r["name"].lower()
+                or role.lower() in ("profile of", "about", "lawyers", "people", "team")):
+            role = ""                                  # not a job title: firm name, part of the person's name or page chrome
         cand = {
             "first_name": r["name"].split(" ", 1)[0], "last_name": r["name"].split(" ", 1)[1] if " " in r["name"] else "",
             "occupation": (f"{role}, {firm}" if role else f"Professional at {firm} (title not stated on profile)"), "employer": firm,
@@ -314,7 +318,8 @@ def stage(settings: dict, out_dir: Path | None = None) -> dict:
             "phone_source_url": r["url"],
             "prev_res_country": r["origin"], "prev_res_city": place, "prev_emp_country": r["origin"], "prev_emp_city": place,
             "prev_emp_dates": "-".join(years) if years else None,
-            "cur_res_country": (chosen or tels[0])["region"], "cur_res_city": r["city"],
+            "cur_res_country": (chosen or tels[0])["region"],
+            "cur_res_city": r["city"] if CITY_COUNTRY.get(r["city"]) == (chosen or tels[0])["region"] else None,
             "external_id": f"firm:{r['host']}:{r['slug']}",
             "evidence": [
                 ev("prev_employment", "STRONG" if r["has_years"] else "MODERATE", r["sentence"],

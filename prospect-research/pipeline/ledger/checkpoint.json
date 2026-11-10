@@ -1,17 +1,18 @@
 {
-  "written": "2026-11-10T21:00:54Z",
+  "written": "2026-11-10T22:12:05Z",
   "target": 1000,
-  "remaining": 884,
+  "remaining": 812,
   "persons_by_status": {
-    "ASK": 350,
+    "ASK": 294,
     "DUPLICATE": 1,
-    "PASS": 116
+    "PASS": 188,
+    "REJECT": 3
   },
   "pass_by_grade": {
-    "C": 45,
-    "D": 71
+    "C": 61,
+    "D": 127
   },
-  "countable": 116,
+  "countable": 188,
   "queue": {
     "pending": 105
   },
@@ -22,5 +23,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "after estate agency and Kromann ingest"
+  "note": "chaplaincy avenue tested; firm crawl ingest"
 }
