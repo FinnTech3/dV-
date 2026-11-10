@@ -1,17 +1,17 @@
 {
-  "written": "2026-11-10T21:00:54Z",
+  "written": "2026-11-10T21:34:57Z",
   "target": 1000,
-  "remaining": 884,
+  "remaining": 814,
   "persons_by_status": {
-    "ASK": 350,
+    "ASK": 280,
     "DUPLICATE": 1,
-    "PASS": 116
+    "PASS": 186
   },
   "pass_by_grade": {
-    "C": 45,
-    "D": 71
+    "C": 59,
+    "D": 127
   },
-  "countable": 116,
+  "countable": 186,
   "queue": {
     "pending": 105
   },
@@ -22,5 +22,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "after estate agency and Kromann ingest"
+  "note": "LinkedIn URLs attached; titles regraded"
 }
