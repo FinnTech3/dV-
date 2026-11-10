@@ -1,17 +1,18 @@
 {
-  "written": "2026-11-10T21:34:57Z",
+  "written": "2026-11-10T22:12:05Z",
   "target": 1000,
-  "remaining": 814,
+  "remaining": 812,
   "persons_by_status": {
-    "ASK": 280,
+    "ASK": 294,
     "DUPLICATE": 1,
-    "PASS": 186
+    "PASS": 188,
+    "REJECT": 3
   },
   "pass_by_grade": {
-    "C": 59,
+    "C": 61,
     "D": 127
   },
-  "countable": 186,
+  "countable": 188,
   "queue": {
     "pending": 105
   },
@@ -22,5 +23,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "LinkedIn URLs attached; titles regraded"
+  "note": "chaplaincy avenue tested; firm crawl ingest"
 }
