@@ -216,7 +216,20 @@ FIRMS = {"www.osborneclarke.com": "Osborne Clarke", "www.wfw.com": "Watson Farle
          "www.garrigues.com": "Garrigues", "www.plmj.com": "PLMJ", "www.vda.pt": "VdA", "www.gide.com": "Gide", "www.baerkarrer.ch": "Bär & Karrer",
          "www.homburger.ch": "Homburger", "www.walderwyss.com": "Walder Wyss", "www.nkf.ch": "Niederer Kraft Frey",
          "www.loyensloeff.com": "Loyens & Loeff", "www.goodwinlaw.com": "Goodwin", "www.gtlaw.com": "Greenberg Traurig",
-         "www.sidley.com": "Sidley Austin", "www.cov.com": "Covington"}
+         "www.sidley.com": "Sidley Austin", "www.cov.com": "Covington",
+         "www.egonzehnder.com": "Egon Zehnder", "www.russellreynolds.com": "Russell Reynolds Associates", "www.heidrick.com": "Heidrick & Struggles",
+         "www.kornferry.com": "Korn Ferry", "www.odgers.com": "Odgers", "www.stantonchase.com": "Stanton Chase", "www.jll.com": "JLL",
+         "www.mewburn.com": "Mewburn Ellis", "www.marks-clerk.com": "Marks & Clerk", "www.dyoung.com": "D Young & Co", "www.maiwald.eu": "Maiwald",
+         "www.kilburnstrode.com": "Kilburn & Strode", "www.boult.com": "Boult", "www.potterclarkson.com": "Potter Clarkson",
+         "www.vossius.eu": "Vossius", "www.grunecker.de": "Grünecker", "www.fticonsulting.com": "FTI Consulting",
+         "www.alixpartners.com": "AlixPartners", "www.teneo.com": "Teneo"}
+SECTOR = {**{h: "executive search firm consultant pages" for h in ("www.egonzehnder.com", "www.russellreynolds.com", "www.heidrick.com",
+                                                                    "www.kornferry.com", "www.odgers.com", "www.stantonchase.com")},
+          "www.jll.com": "property consultancy broker pages",
+          **{h: "patent and trade mark firm people pages" for h in ("www.mewburn.com", "www.marks-clerk.com", "www.dyoung.com", "www.maiwald.eu",
+                                                                     "www.kilburnstrode.com", "www.boult.com", "www.potterclarkson.com",
+                                                                     "www.vossius.eu", "www.grunecker.de")},
+          **{h: "consulting and advisory firm people pages" for h in ("www.fticonsulting.com", "www.alixpartners.com", "www.teneo.com")}}
 PRESENT = re.compile(r"\b(is based|currently|is a .{0,40} in (our|the) (London|Dublin|Amsterdam)|based in (London|Dublin|Amsterdam|Bristol|Manchester|Edinburgh|Leeds|Birmingham|Reading|Glasgow))\b", re.IGNORECASE)
 
 
@@ -285,7 +298,7 @@ def stage(settings: dict, out_dir: Path | None = None) -> dict:
         batches.setdefault(r["host"], []).append(cand)
         stats["staged"] += 1
     for host, cands in batches.items():
-        payload = {"batch_id": "FIRM-" + re.sub(r"^www\.", "", host).split(".")[0], "channel": "law firm people directory", "source": FIRMS.get(host, host),
+        payload = {"batch_id": "FIRM-" + re.sub(r"^www\.", "", host).split(".")[0], "channel": SECTOR.get(host, "law firm people directory"), "source": FIRMS.get(host, host),
                    "country": "multi", "city": "multi", "candidates": cands}
         (out_dir / f"{payload['batch_id']}.json").write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     return stats

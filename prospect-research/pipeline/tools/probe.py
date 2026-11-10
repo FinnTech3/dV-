@@ -31,7 +31,7 @@ def probe(host, pat=r"/(people|lawyers|professionals|team|our-people|experts|anw
     allowed = [u for u in urls if rp.can_fetch(UA, u)]
     out.update(sitemaps=len(seen), people_urls=len(urls), allowed=len(allowed), sample=sorted(allowed)[:2])
     return out
-def probe_urls(host, pat=r"/(people|lawyers|professionals|team|our-people|experts|profiles?)/[^/]+"):
+def probe_urls(host, pat=r"/(people|lawyers|professionals|team|our-people|experts|profiles?|consultants?|advisors?|attorneys(-professionals/profile)?|bio-broker)/[^/?]+"):
     """All robots-allowed people-profile URLs listed in a host's sitemaps."""
     _, robots = get(f"https://{host}/robots.txt")
     rp = urllib.robotparser.RobotFileParser(); rp.parse(robots.splitlines())
