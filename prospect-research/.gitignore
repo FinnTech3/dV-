@@ -1,0 +1,18 @@
+# Personal prospect data, evidence and workbooks stay local. Never commit them.
+pipeline/database/*
+pipeline/staging/*
+pipeline/evidence/*
+pipeline/output/*
+pipeline/private/*
+pipeline/report/*
+pipeline/ledger/*
+!pipeline/ledger/checkpoint.json
+pipeline/config/compliance_approval.json
+!pipeline/**/.gitkeep
+*.sqlite
+*.sqlite-journal
+*.xlsx
+*.tsv
+*.jsonl
+__pycache__/
+.pytest_cache/

@@ -1,0 +1,19 @@
+{
+  "written": "2026-11-10T15:40:38Z",
+  "target": 1000,
+  "remaining": 1000,
+  "persons_by_status": {},
+  "pass_by_grade": {},
+  "countable": 0,
+  "queue": {
+    "pending": 105
+  },
+  "next_task": {
+    "id": 1,
+    "country": "ES",
+    "city": "Alicante province (Costa Blanca)",
+    "source": "five-by-five industries and significant companies",
+    "next_action": "research and record in docs/plan"
+  },
+  "note": "setup complete; person gate closed"
+}
