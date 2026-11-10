@@ -6,6 +6,7 @@ is the type the public source itself states (see `declared_type`).
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 import phonenumbers
@@ -26,8 +27,9 @@ def normalise(raw: str | None, region_hint: str | None = None) -> ParsedPhone:
     if not raw or not raw.strip():
         return ParsedPhone(raw or "", None, False, None, "empty")
     text = raw.strip()
-    if text.startswith("00"):
-        text = "+" + text[2:]                      # international access prefix written as 00
+    lead = re.match(r"^\(?\s*00\s*(\d{1,3})\s*\)?", text)
+    if lead:
+        text = "+" + lead.group(1) + text[lead.end():]   # international access prefix written as 00 or (00xx)
     try:
         num = phonenumbers.parse(text, region_hint)
     except phonenumbers.NumberParseException as exc:
