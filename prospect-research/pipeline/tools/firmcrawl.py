@@ -208,7 +208,15 @@ if __name__ == "__main__":
 
 FIRMS = {"www.osborneclarke.com": "Osborne Clarke", "www.wfw.com": "Watson Farley & Williams", "www.withersworldwide.com": "Withers",
          "www.pinsentmasons.com": "Pinsent Masons", "www.hoganlovells.com": "Hogan Lovells", "www.dlapiper.com": "DLA Piper",
-         "www.cms.law": "CMS", "www.twobirds.com": "Bird & Bird", "www.gowlingwlg.com": "Gowling WLG"}
+         "www.cms.law": "CMS", "www.twobirds.com": "Bird & Bird", "www.gowlingwlg.com": "Gowling WLG",
+         "www.hfw.com": "HFW", "dwfgroup.com": "DWF", "www.addleshawgoddard.com": "Addleshaw Goddard", "www.bclplaw.com": "BCLP",
+         "www.squirepattonboggs.com": "Squire Patton Boggs", "www.bakermckenzie.com": "Baker McKenzie", "www.lw.com": "Latham & Watkins",
+         "www.dechert.com": "Dechert", "www.mayerbrown.com": "Mayer Brown", "www.reedsmith.com": "Reed Smith", "www.klgates.com": "K&L Gates",
+         "www.noerr.com": "Noerr", "www.gleisslutz.com": "Gleiss Lutz", "www.luther-lawfirm.com": "Luther", "www.cuatrecasas.com": "Cuatrecasas",
+         "www.garrigues.com": "Garrigues", "www.plmj.com": "PLMJ", "www.vda.pt": "VdA", "www.gide.com": "Gide", "www.baerkarrer.ch": "Bär & Karrer",
+         "www.homburger.ch": "Homburger", "www.walderwyss.com": "Walder Wyss", "www.nkf.ch": "Niederer Kraft Frey",
+         "www.loyensloeff.com": "Loyens & Loeff", "www.goodwinlaw.com": "Goodwin", "www.gtlaw.com": "Greenberg Traurig",
+         "www.sidley.com": "Sidley Austin", "www.cov.com": "Covington"}
 PRESENT = re.compile(r"\b(is based|currently|is a .{0,40} in (our|the) (London|Dublin|Amsterdam)|based in (London|Dublin|Amsterdam|Bristol|Manchester|Edinburgh|Leeds|Birmingham|Reading|Glasgow))\b", re.IGNORECASE)
 
 
@@ -277,7 +285,7 @@ def stage(settings: dict, out_dir: Path | None = None) -> dict:
         batches.setdefault(r["host"], []).append(cand)
         stats["staged"] += 1
     for host, cands in batches.items():
-        payload = {"batch_id": f"FIRM-{host.split('.')[1]}", "channel": "law firm people directory", "source": FIRMS.get(host, host),
+        payload = {"batch_id": "FIRM-" + re.sub(r"^www\.", "", host).split(".")[0], "channel": "law firm people directory", "source": FIRMS.get(host, host),
                    "country": "multi", "city": "multi", "candidates": cands}
         (out_dir / f"{payload['batch_id']}.json").write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     return stats
