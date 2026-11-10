@@ -1,0 +1,42 @@
+{
+  "target_countable": 1000,
+  "timezone": "Europe/London",
+  "origin_countries": ["GB", "IE", "NL"],
+  "target_countries": ["ES", "PT", "FR", "DE", "CH"],
+  "eu_mainland_eligible": [
+    "AT", "BE", "BG", "HR", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IT",
+    "LV", "LT", "LU", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "CH"
+  ],
+  "residence_reject_countries": ["GB", "IE"],
+  "residence_ask_countries": ["NL", "MT", "CY", "NO", "IS", "LI", "AD", "MC"],
+  "residence_ask_regions": [
+    "balearic", "balears", "baleares", "mallorca", "majorca", "menorca", "ibiza", "formentera",
+    "canary", "canarias", "tenerife", "gran canaria", "lanzarote", "fuerteventura", "la palma",
+    "madeira", "funchal", "azores", "acores", "açores", "ponta delgada",
+    "corsica", "corse", "ajaccio", "bastia",
+    "sardinia", "sardegna", "cagliari",
+    "sicily", "sicilia", "palermo", "catania",
+    "crete", "kriti", "heraklion", "chania"
+  ],
+  "other_european_ask_countries": [
+    "AL", "BA", "BY", "FO", "GE", "GI", "GG", "IM", "JE", "MD", "ME", "MK", "RS", "RU",
+    "SM", "TR", "UA", "VA", "XK", "AM", "AZ"
+  ],
+  "freshness_months": 12,
+  "stale_weak_cap_months": 36,
+  "fuzzy_name_threshold": 0.88,
+  "fetch": {
+    "user_agent": "prospect-research-bot/0.1 (supervised training exercise; respects robots.txt)",
+    "min_seconds_between_requests_per_host": 2.0,
+    "timeout_seconds": 20,
+    "forbidden_hosts": ["linkedin.com", "www.linkedin.com", "lnkd.in"]
+  },
+  "export": {
+    "template_filename": "Prospect List.xlsx",
+    "working_copy_filename": "Prospect_List_.xlsx",
+    "sheet": "Sheet1",
+    "expected_headings": ["First name ", "Last Name", "Occupation", "Mobile Number", "Email", "Linkedin profile link"],
+    "grades_allowed": ["A", "B", "C"],
+    "phone_types_allowed": ["mobile"]
+  }
+}

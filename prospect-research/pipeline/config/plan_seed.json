@@ -1,0 +1,22 @@
+{
+  "selected": "2026-11-10",
+  "status": "provisional - see docs/plan/plan.md for evidence and limitations",
+  "cities": {
+    "ES": ["Alicante province (Costa Blanca)", "Malaga province (Costa del Sol)", "Barcelona"],
+    "PT": ["Algarve (Faro district)", "Lisbon", "Porto"],
+    "FR": ["Paris / Ile-de-France", "Bordeaux / Nouvelle-Aquitaine", "Toulouse / Occitanie"],
+    "DE": ["Berlin", "Munich / Oberbayern", "Frankfurt am Main"],
+    "CH": ["Zurich", "Lausanne / Vaud", "Geneva"]
+  },
+  "non_personal_tasks": [
+    ["five-by-five industries and significant companies", "plan"],
+    ["connector organisations (11 categories)", "plan"],
+    ["directories and associations register", "plan"],
+    ["events in the next three calendar months", "events"]
+  ],
+  "person_level_tasks": [
+    ["official staff biographies of connector organisations", "staff_bios"],
+    ["chamber and association public committee/member profiles", "directory"],
+    ["public professional directories", "directory"]
+  ]
+}
