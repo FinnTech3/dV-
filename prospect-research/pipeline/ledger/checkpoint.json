@@ -1,18 +1,17 @@
 {
-  "written": "2026-11-10T18:48:57Z",
+  "written": "2026-11-10T20:34:35Z",
   "target": 1000,
-  "remaining": 920,
+  "remaining": 900,
   "persons_by_status": {
-    "ASK": 279,
+    "ASK": 324,
     "DUPLICATE": 1,
-    "PASS": 80,
-    "REJECT": 9
+    "PASS": 100
   },
   "pass_by_grade": {
-    "C": 24,
-    "D": 56
+    "C": 33,
+    "D": 67
   },
-  "countable": 80,
+  "countable": 100,
   "queue": {
     "pending": 105
   },
@@ -23,5 +22,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "Firm crawl batches ingested: 80 PASS, 112 valid pending LinkedIn"
+  "note": "100 PASS, 132 valid pending LinkedIn"
 }

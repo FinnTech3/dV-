@@ -23,7 +23,7 @@ from . import ch, db, discover, gate, queue, render, report, search
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="pipeline")
-    ap.add_argument("command", choices=["init", "seed", "status", "gate", "inspect", "ingest", "dedupe", "export", "report", "checkpoint"])
+    ap.add_argument("command", choices=["init", "seed", "status", "gate", "inspect", "ingest", "dedupe", "export", "report", "lists", "checkpoint"])
     ap.add_argument("path", nargs="?")
     ap.add_argument("--db", default=None)
     args = ap.parse_args(argv)
@@ -77,6 +77,22 @@ def main(argv: list[str] | None = None) -> int:
         out = db.PIPELINE / "report" / "report.md"
         out.write_text(report.render_markdown(conn, settings, rep), encoding="utf-8")
         print(f"wrote {out}")
+    elif args.command == "lists":
+        import csv
+        out = db.PIPELINE / "output"
+        pend = conn.execute("SELECT first_name, last_name, employer, occupation, cur_res_country, cur_res_city, grade, phone_source_url FROM persons "
+                            "WHERE status='ASK' AND reserve=1 AND grade IS NOT NULL AND suppressed=0 ORDER BY employer, last_name").fetchall()
+        with (out / "linkedin_lookup.tsv").open("w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh, delimiter="\t")
+            w.writerow(["First name", "Last name", "Firm", "Occupation", "Country", "City", "Grade", "Firm profile page", "LinkedIn URL (fill in)"])
+            w.writerows([list(r) + [""] for r in pend])
+        ok = conn.execute("SELECT first_name, last_name, occupation, phone_e164, phone_type, email, linkedin_url, grade, employer, cur_res_country "
+                          "FROM persons WHERE status='PASS' AND suppressed=0 ORDER BY grade, employer, last_name").fetchall()
+        with (out / "valid_prospects_review.tsv").open("w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh, delimiter="\t")
+            w.writerow(["First name", "Last Name", "Occupation", "Phone", "Phone type", "Email", "Linkedin profile link", "Grade", "Firm", "Country"])
+            w.writerows([list(r) for r in ok])
+        print(f"{len(ok)} passing, {len(pend)} waiting for a LinkedIn URL")
     elif args.command == "checkpoint":
         print(json.dumps(queue.checkpoint(conn, settings, note=args.path or ""), indent=2))
     return 0

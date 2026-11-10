@@ -112,6 +112,26 @@ def extract(url: str, body: str) -> dict:
         label = "mobile" if MOBILE.search(ctx) else ("direct_landline" if DIRECT.search(ctx) else "unknown")
         if e164 not in [t["e164"] for t in tels]:
             tels.append({"raw": raw.strip(), "e164": e164, "region": phonenumbers.region_code_for_number(num), "label": label})
+    if not tels:      # numbers printed as text or in page metadata instead of tel: links
+        found = [(m.group(2), m.group(1) or "") for m in re.finditer(
+            r"(?i)((?:mob(?:ile|il)?|m|cell|dir(?:ect)?|d|t|tel(?:ephone|efon)?|phone)\s*[.:]?\s*)?(\+\s?\d{2,3}[\s().\d-]{7,18}\d)", _text(body))]
+        found += [(m.group(1), "") for m in re.finditer(r'"telephone"\s*:\s*"([^"]{8,30})"', body)]
+        for raw, lab in found:
+            raw = raw.replace("(0)", "")
+            try:
+                num = phonenumbers.parse(raw, None)
+            except phonenumbers.NumberParseException:
+                continue
+            if not phonenumbers.is_valid_number(num):
+                continue
+            e164 = phonenumbers.format_number(num, phonenumbers.PhoneNumberFormat.E164)
+            label = "mobile" if MOBILE.search(lab) else ("direct_landline" if DIRECT.search(lab) else "unknown")
+            hit = next((t for t in tels if t["e164"] == e164), None)
+            if hit:
+                if hit["label"] == "unknown":
+                    hit["label"] = label
+            else:
+                tels.append({"raw": raw.strip(), "e164": e164, "region": phonenumbers.region_code_for_number(num), "label": label})
     li = None
     for m in re.finditer(r'href="(https?://[a-z.]*linkedin\.com/in/[^"?#]+)', body):
         li = linkedin.clean(html.unescape(m.group(1)))
@@ -286,7 +306,7 @@ def stage(settings: dict, out_dir: Path | None = None) -> dict:
             "first_name": r["name"].split(" ", 1)[0], "last_name": r["name"].split(" ", 1)[1] if " " in r["name"] else "",
             "occupation": (f"{role}, {firm}" if role else f"Professional at {firm} (title not stated on profile)"), "employer": firm,
             "linkedin_url": r["linkedin"], "linkedin_captured_from": r["url"] if r["linkedin"] else None,
-            "phone_raw": (chosen or tels[0])["raw"], "phone_type": (chosen["label"] if chosen else "switchboard"),
+            "phone_raw": (chosen or tels[0])["e164"], "phone_type": (chosen["label"] if chosen else "switchboard"),
             "phone_attribution": ("published on the person's own firm profile; not listed on any other profile crawled" if chosen
                                   else "number on the profile is shared with other profiles"),
             "phone_source_url": r["url"],
