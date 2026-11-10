@@ -1,8 +1,10 @@
 {
-  "written": "2026-11-10T15:40:38Z",
+  "written": "2026-11-10T16:36:38Z",
   "target": 1000,
   "remaining": 1000,
-  "persons_by_status": {},
+  "persons_by_status": {
+    "ASK": 3
+  },
   "pass_by_grade": {},
   "countable": 0,
   "queue": {
@@ -15,5 +17,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "setup complete; person gate closed"
+  "note": "HARVEST batch ES-ALC-0001 ingested: 3 reviewed, 0 countable"
 }

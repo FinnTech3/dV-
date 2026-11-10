@@ -76,7 +76,7 @@ def ingest_candidate(conn: sqlite3.Connection, cand: dict, settings: dict, as_of
     fuzzy = [] if dup_uuid else dedupe.possible_duplicates(conn, c, settings["fuzzy_name_threshold"])
     collisions = dedupe.shared_number_collisions(conn, c) if c.get("phone_type") in ("shared_switchboard", "unknown") else []
 
-    hold = phone.crm_hold_reason(c.get("phone_type"), result["grade"], settings) if result["status"] == "PASS" else None
+    hold = phone.crm_hold_reason(c.get("phone_type"), result["grade"], settings) if result["grade"] else None
     notes = [n for n in [_quarantine(c.get("notes"))] if n]
     if collisions:
         notes.append(f"shared number also listed for {len(collisions)} other record(s); not treated as the same person")
@@ -146,6 +146,27 @@ def ingest_batch(conn: sqlite3.Connection, staging_file: Path, settings: dict, s
            discovered=counts["new"], reviewed=counts["new"], grades=json.dumps(counts["grades"]),
            duplicates=counts["DUPLICATE"], ask=counts["ASK"], reject=counts["REJECT"], note=f"batch {batch_id}")
     return counts
+
+
+def set_linkedin(conn: sqlite3.Connection, person_uuid: str, url: str, captured_from: str, settings: dict) -> str:
+    """Attach a profile URL supplied later; a reserve record that lacked only the URL becomes PASS."""
+    clean = linkedin.clean(url)
+    if not clean:
+        raise ValueError("not a personal LinkedIn profile URL")
+    dup = conn.execute("SELECT uuid FROM persons WHERE linkedin_url = ? AND uuid != ?", (clean, person_uuid)).fetchone()
+    if dup:
+        conn.execute("UPDATE persons SET status='DUPLICATE', grade=NULL, duplicate_of=?, duplicate_criterion='exact LinkedIn URL' WHERE uuid=?",
+                     (dup["uuid"], person_uuid))
+        conn.commit()
+        return "DUPLICATE"
+    row = conn.execute("SELECT status, grade, reserve, status_reason FROM persons WHERE uuid = ?", (person_uuid,)).fetchone()
+    only_missing = row["reserve"] and row["grade"] and row["status_reason"].startswith("INCOMPLETE RESERVE")
+    conn.execute("UPDATE persons SET linkedin_url = ?, notes = COALESCE(notes || ' | ', '') || ? WHERE uuid = ?",
+                 (clean, f"LinkedIn URL captured from: {captured_from}", person_uuid))
+    if only_missing:
+        conn.execute("UPDATE persons SET status='PASS', reserve=0, status_reason=? WHERE uuid=?", (f"PASS grade {row['grade']}", person_uuid))
+    conn.commit()
+    return "PASS" if only_missing else row["status"]
 
 
 def suppress(conn: sqlite3.Connection, person_uuid: str, basis: str = "individual asked not to be contacted") -> None:

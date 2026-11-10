@@ -153,6 +153,8 @@ def test_15_shared_number_is_not_a_duplicate(conn, settings):
 def test_16_invalid_number(conn, settings):
     assert phone.normalise("+34 12", None).valid is False
     assert phone.normalise("612 345 678", "ES").e164 == "+34612345678"
+    assert phone.normalise("(0034) 911 234 567").e164 == "+34911234567"
+    assert phone.normalise("(+34) 612 345 678").e164 == "+34612345678"
     res = ingest(conn, settings, make(phone_raw="+34 12"))
     assert res["status"] == "REJECT" and "failed validation" in res["reason"]
 

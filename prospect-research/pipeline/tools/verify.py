@@ -63,7 +63,8 @@ def effective_item_level(item: dict, as_of: date, corroborated_recently: bool = 
         return NONE                      # unverified sources cannot support a PASS grade
     if reliability == "AGGREGATOR":
         level = _cap(level, MODERATE)    # an aggregator alone is never STRONG
-    if item.get("criterion") in CURRENT_CRITERIA and not corroborated_recently:
+    live = (item.get("live_first_party") and item.get("criterion") == "occupation" and reliability == "PRIMARY")
+    if item.get("criterion") in CURRENT_CRITERIA and not corroborated_recently and not live:
         pub = parse_date(item.get("publication_date"))
         if pub is None:
             level = _cap(level, MODERATE)            # undated: cannot be shown to be current
@@ -261,6 +262,8 @@ def classify(cand: dict, levels: dict[str, str], settings: dict, duplicate_of: s
         result["reserve"] = 1
     if asks:
         result.update(status="ASK", reason="; ".join(a for a in asks if a))
+        if len(asks) == 1 and result["reserve"]:
+            result["grade"] = g              # valid on every other test; waiting only for a profile URL
         return result
 
     result.update(status="PASS", grade=g, reason=f"PASS grade {g}", countable=True)

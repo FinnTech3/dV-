@@ -31,6 +31,8 @@ def summary(conn: sqlite3.Connection, settings: dict) -> dict:
         "a_plus_b": grades["A"] + grades["B"],
         "reserve": conn.execute(f"SELECT COUNT(*) FROM persons WHERE {real} AND reserve=1").fetchone()[0],
         "suppressed": conn.execute(f"SELECT COUNT(*) FROM persons WHERE {real} AND suppressed=1").fetchone()[0],
+        "pending_linkedin": {r["grade"]: r["n"] for r in conn.execute(
+            f"SELECT grade, COUNT(*) n FROM persons WHERE {real} AND status='ASK' AND reserve=1 AND grade IS NOT NULL AND suppressed=0 GROUP BY grade")},
         "remaining": max(settings["target_countable"] - countable, 0),
         "target": settings["target_countable"], "phones": phones,
     }
@@ -69,6 +71,8 @@ def render_markdown(conn: sqlite3.Connection, settings: dict, export_report: dic
                  ["PASS Grade A", g["A"]], ["PASS Grade B", g["B"]], ["PASS Grade C", g["C"]], ["PASS Grade D", g["D"]],
                  ["Total countable PASS", s["countable"]], ["ASK", s["status"]["ASK"]],
                  ["  of which incomplete reserve (no LinkedIn URL)", s["reserve"]],
+                 ["  of which valid on every other test, waiting only for a LinkedIn URL", sum(s["pending_linkedin"].values())],
+                 ["    by grade", ", ".join(f"{k}: {v}" for k, v in sorted(s["pending_linkedin"].items())) or "-"],
                  ["  of which suppressed (asked not to be contacted)", s["suppressed"]],
                  ["REJECT", s["status"]["REJECT"]], ["DUPLICATE", s["status"]["DUPLICATE"]],
                  [f"Remaining to {s['target']}", s["remaining"]]]), "",
