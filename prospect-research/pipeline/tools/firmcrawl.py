@@ -222,13 +222,29 @@ FIRMS = {"www.osborneclarke.com": "Osborne Clarke", "www.wfw.com": "Watson Farle
          "www.mewburn.com": "Mewburn Ellis", "www.marks-clerk.com": "Marks & Clerk", "www.dyoung.com": "D Young & Co", "www.maiwald.eu": "Maiwald",
          "www.kilburnstrode.com": "Kilburn & Strode", "www.boult.com": "Boult", "www.potterclarkson.com": "Potter Clarkson",
          "www.vossius.eu": "Vossius", "www.grunecker.de": "Grünecker", "www.fticonsulting.com": "FTI Consulting",
-         "www.alixpartners.com": "AlixPartners", "www.teneo.com": "Teneo"}
+         "www.alixpartners.com": "AlixPartners", "www.teneo.com": "Teneo",
+         "www.stephensonharwood.com": "Stephenson Harwood", "www.jonesday.com": "Jones Day", "www.clearygottlieb.com": "Cleary Gottlieb",
+         "www.weil.com": "Weil", "www.milbank.com": "Milbank", "www.hengeler.com": "Hengeler Mueller", "www.arendt.com": "Arendt",
+         "www.stibbe.com": "Stibbe", "www.legance.com": "Legance", "www.ga-p.com": "Gómez-Acebo & Pombo", "www.mlgts.pt": "Morais Leitão",
+         "www.jeantet.fr": "Jeantet", "www.pestalozzilaw.com": "Pestalozzi", "www.vischer.com": "VISCHER",
+         "www.kellerhals-carrard.ch": "Kellerhals Carrard", "www.mannheimerswartling.se": "Mannheimer Swartling", "www.roschier.com": "Roschier",
+         "www.kromannreumert.com": "Kromann Reumert", "www.plesner.com": "Plesner", "www.liedekerke.com": "Liedekerke", "www.goerg.de": "GÖRG",
+         "www.oppenhoff.eu": "Oppenhoff", "www.arqis.com": "ARQIS", "www.fgvw.de": "Friedrich Graf von Westphalen",
+         "www.murgitroyd.com": "Murgitroyd", "www.withersrogers.com": "Withers & Rogers", "www.reddie.co.uk": "Reddie & Grose",
+         "www.hlk-ip.com": "HLK", "www.gje.com": "Gill Jennings & Every", "www.forresters-ip.com": "Forresters",
+         "www.appleyardlees.com": "Appleyard Lees", "www.barkerbrettell.co.uk": "Barker Brettell", "www.keltie.com": "Keltie",
+         "www.hec.edu": "HEC Paris", "www.unibocconi.it": "Bocconi University", "www.frankfurt-school.de": "Frankfurt School of Finance & Management",
+         "www.embl.org": "EMBL"}
 SECTOR = {**{h: "executive search firm consultant pages" for h in ("www.egonzehnder.com", "www.russellreynolds.com", "www.heidrick.com",
                                                                     "www.kornferry.com", "www.odgers.com", "www.stantonchase.com")},
           "www.jll.com": "property consultancy broker pages",
           **{h: "patent and trade mark firm people pages" for h in ("www.mewburn.com", "www.marks-clerk.com", "www.dyoung.com", "www.maiwald.eu",
                                                                      "www.kilburnstrode.com", "www.boult.com", "www.potterclarkson.com",
                                                                      "www.vossius.eu", "www.grunecker.de")},
+          **{h: "patent and trade mark firm people pages" for h in ("www.murgitroyd.com", "www.withersrogers.com", "www.reddie.co.uk", "www.hlk-ip.com",
+                                                                     "www.gje.com", "www.forresters-ip.com", "www.appleyardlees.com",
+                                                                     "www.barkerbrettell.co.uk", "www.keltie.com")},
+          **{h: "university and research institute staff pages" for h in ("www.hec.edu", "www.unibocconi.it", "www.frankfurt-school.de", "www.embl.org")},
           **{h: "consulting and advisory firm people pages" for h in ("www.fticonsulting.com", "www.alixpartners.com", "www.teneo.com")}}
 PRESENT = re.compile(r"\b(is based|currently|is a .{0,40} in (our|the) (London|Dublin|Amsterdam)|based in (London|Dublin|Amsterdam|Bristol|Manchester|Edinburgh|Leeds|Birmingham|Reading|Glasgow))\b", re.IGNORECASE)
 
