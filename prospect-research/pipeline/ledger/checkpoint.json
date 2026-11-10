@@ -1,12 +1,18 @@
 {
-  "written": "2026-11-10T16:36:38Z",
+  "written": "2026-11-10T18:48:57Z",
   "target": 1000,
-  "remaining": 1000,
+  "remaining": 920,
   "persons_by_status": {
-    "ASK": 3
+    "ASK": 279,
+    "DUPLICATE": 1,
+    "PASS": 80,
+    "REJECT": 9
   },
-  "pass_by_grade": {},
-  "countable": 0,
+  "pass_by_grade": {
+    "C": 24,
+    "D": 56
+  },
+  "countable": 80,
   "queue": {
     "pending": 105
   },
@@ -17,5 +23,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "HARVEST batch ES-ALC-0001 ingested: 3 reviewed, 0 countable"
+  "note": "Firm crawl batches ingested: 80 PASS, 112 valid pending LinkedIn"
 }
