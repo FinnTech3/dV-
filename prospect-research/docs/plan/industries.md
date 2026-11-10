@@ -1,0 +1,24 @@
+# Industries and significant local companies (first pass)
+
+Checked 10 November 2026 from one web search per country. This is **not** a completed five-by-five: most cities have fewer than five industries with named companies, sources are mixed in age and quality, and no ranking is claimed. Companies are "significant local companies", not "the five largest". Company websites have not been opened yet.
+
+| Country | City | Industries indicated | Significant local companies named by sources | Source | Gaps |
+|---|---|---|---|---|---|
+| ES | Barcelona | Services; automotive; chemical-pharmaceutical; food; construction | Grifols; SEAT | [Leading Edge Guides](https://leadingedgeguides.com/guide-barcelona-economic-balance/), [MarketLine](https://store.marketline.com/report/barcelona-city-pest-analysis/) | Three industries without companies |
+| ES | Málaga province | Hospitality; business process outsourcing; technology (Málaga TechPark, 96% occupied late 2024) | Google and Accenture (investment announcements) | [Kitalent](https://kitalent.com/articles-spain.md) (recruiter marketing) | No TechPark tenant list; needs the park's own site |
+| ES | Alicante province | Tourism and hospitality; real estate and construction; manufacturing; port logistics; technology | None named | Same, plus [INE employment data](https://www.ine.es/jaxi/files/tpx/csv_bdsc/72947.csv) | No companies |
+| PT | Lisbon | Tourism; finance and insurance; consulting; telecommunications; ICT and shared services | EDP; Galp; Jerónimo Martins | [MarketLine](https://store.marketline.com/report/lisbon-city-pest-analysis/), [Rivermate](https://rivermate.com/guides/portugal/overview) | Company-to-industry mapping not verified |
+| PT | Porto | Textiles; footwear; furniture; wine; food processing; finance | Sonae; Mota-Engil; Ibersol; Millennium bcp; Banco BPI | [Wikipedia mirror](https://wiki.riteme.site/wiki/Portuguese_economy) | Aggregator source |
+| PT | Algarve | Tourism | None named | [Portugal News](https://theportugalnews.com/news/2022-10-16/how-important-is-tourism-to-portugal/71173) | One industry only |
+| FR | Paris / Île-de-France | Public administration; financial activities; consulting; operational services | None named | [INSEE](https://www.insee.fr/fr/statistiques/fichier/7661194/ENTFRA23-F12.pdf) | Sector data from 2000; no companies |
+| FR | Toulouse | Aeronautics and space (construction, design and research) | None named | [Toulouse Métropole 2025](https://metropole.toulouse.fr/sites/toulouse-fr/files/2025-08/recit_eco_2025_p_a_p_1.pdf) | One industry; no companies |
+| FR | Bordeaux | Public sector; aerospace (Aerospace Valley cluster); tourism; wine; social economy | None named | [Welcome to the Jungle](https://www.welcometothejungle.com/fr/articles/travailler-a-bordeaux) | No companies |
+| DE | Berlin | Services (about 84% of companies); healthcare; transport; new space and AI | Deutsche Bahn; Charité; Vivantes | [Berlin Partner top 200](https://www.berlin-partner.de/en/news/detail/die-top-200-mit-den-groessten-arbeitgebern-berlins-1) | The top-200 list itself not opened |
+| DE | Munich | Automotive; IT; biotech; engineering and electronics; insurance | BMW; Siemens; Allianz; Microsoft; Airbus | [Built In](https://builtin.com/articles/largest-companies-in-germany) and city guides | Blog-level sources |
+| DE | Frankfurt am Main | Banking; exchange and financial infrastructure; aviation; services | Deutsche Bank; Deutsche Börse; Frankfurt Airport (Fraport) | [MarketLine](https://store.marketline.com/report/frankfurt-city-pest-analysis/) | Finance-heavy: expect many occupation exclusions |
+| CH | Zurich | Banking; insurance; engineering; technology | UBS; Zurich Insurance; Swiss Re; ABB; Google Switzerland | [Wikipedia](https://en.wikipedia.com/wiki/List_of_Swiss_companies_by_revenue) | Aggregator source; finance-heavy |
+| CH | Lausanne / Vaud | Life sciences; nutrition; digital technology; precision industry; banking and insurance | Nestlé (Vevey); CHUV; Banque Cantonale Vaudoise; Vaudoise; Philip Morris International; Medtronic | [Innovaud](https://www.innovaud.ch/en/assets/why-invest-in-canton-of-vaud/economic-prosperity), [valindex](https://valindex.ch/en/cantons/vaud/) | Closest to complete |
+| CH | Geneva | Private wealth management; commodity trading; luxury goods; inspection services; shipping | Richemont; SGS; MSC | [Verdict](https://www.verdict.co.uk/?p=351891) | Wealth management is an excluded occupation area |
+
+## What this means for harvesting
+Large employers rarely publish staff phone numbers. They matter mainly as former or current employers to recognise in a biography. The sources likely to yield a named person with a published direct number are the connector organisations (estate agents, law firms, relocation firms, recruiters, clinics) and chamber or association committee pages. Connector research is still queued.

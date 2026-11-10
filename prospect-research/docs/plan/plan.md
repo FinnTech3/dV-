@@ -54,7 +54,7 @@ Source: [ONS](https://www.ons.gov.uk/peoplepopulationandcommunity/populationandm
 Source: [Le News](https://lenews.ch/2017/06/29/new-figures-reveal-british-are-scrambling-for-swiss-citizenship/). Reserve: Basel (2,216 in 2016).
 
 ## Five-by-five industries and companies
-**Not done.** Queued for all 15 cities.
+First pass only, see [industries.md](industries.md). Not a completed five-by-five.
 
 ## Connector organisations (11 categories)
 **Not done.** Queued for all 15 cities.
