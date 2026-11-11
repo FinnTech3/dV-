@@ -1,9 +1,9 @@
 {
-  "written": "2026-11-11T07:51:53Z",
+  "written": "2026-11-11T08:04:33Z",
   "target": 1000,
   "remaining": 809,
   "persons_by_status": {
-    "ASK": 308,
+    "ASK": 312,
     "DUPLICATE": 1,
     "PASS": 191,
     "REJECT": 8
@@ -23,5 +23,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "Routes tested 11 Nov: announcement mining, academic CVs, BCG, open-data seed, team-page segmentation; 248 valid"
+  "note": "Madrid open-data per-person crawl done; Buro Happold/Latham ingest"
 }
