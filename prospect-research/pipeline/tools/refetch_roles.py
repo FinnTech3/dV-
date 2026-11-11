@@ -46,6 +46,7 @@ def run_host(host: str, urls: list[str], settings: dict) -> tuple[int, int, int]
             for attempt in range(5):                      # the crawl database has other writers; wait and retry, never abort the host
                 try:
                     conn.execute("UPDATE pages SET role=? WHERE url=?", (role, u))
+                    conn.commit()                         # never hold the write lock across a network fetch
                     fixed += 1
                     break
                 except sqlite3.OperationalError:
