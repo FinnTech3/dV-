@@ -1,18 +1,18 @@
 {
-  "written": "2026-11-11T08:12:21Z",
+  "written": "2026-11-11T09:07:14Z",
   "target": 1000,
-  "remaining": 809,
+  "remaining": 791,
   "persons_by_status": {
-    "ASK": 314,
+    "ASK": 296,
     "DUPLICATE": 1,
-    "PASS": 191,
+    "PASS": 209,
     "REJECT": 8
   },
   "pass_by_grade": {
-    "C": 61,
-    "D": 130
+    "C": 65,
+    "D": 144
   },
-  "countable": 191,
+  "countable": 209,
   "queue": {
     "pending": 105
   },
@@ -23,5 +23,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "Buro Happold crawl complete"
+  "note": "LinkedIn agent batch 1 applied"
 }
