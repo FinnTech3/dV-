@@ -91,7 +91,8 @@ def main(argv: list[str] | None = None) -> int:
         with (out / "valid_prospects_review.tsv").open("w", newline="", encoding="utf-8") as fh:
             w = csv.writer(fh, delimiter="\t")
             w.writerow(["First name", "Last Name", "Occupation", "Phone", "Phone type", "Email", "Linkedin profile link", "Grade", "Firm", "Country"])
-            w.writerows([list(r) for r in ok])
+            label = {"shared_switchboard": "SHARED OFFICE NUMBER (accepted under recorded waiver)"}
+            w.writerows([[label.get(v, v) if i == 4 else v for i, v in enumerate(r)] for r in ok])
         print(f"{len(ok)} passing, {len(pend)} waiting for a LinkedIn URL")
     elif args.command == "checkpoint":
         print(json.dumps(queue.checkpoint(conn, settings, note=args.path or ""), indent=2))

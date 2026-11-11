@@ -127,7 +127,8 @@ def crawl(probe_path: str, workers: int = 48) -> None:
     res = json.load(open(probe_path))
     cc = firmcrawl.crawl_conn()
     for h, m in res.items():
-        cc.execute("INSERT OR IGNORE INTO host_meta VALUES (?,?,?,?)", (h, m["label"][:80], "open-data seed: professional websites in " + m["market"], "OpenStreetMap"))
+        channel = m.get("channel") or ("open-data seed: professional websites in " + m["market"])
+        cc.execute("INSERT OR REPLACE INTO host_meta VALUES (?,?,?,?)", (h, m["label"][:80], channel, m.get("source") or "OpenStreetMap"))
     cc.commit()
     with ThreadPoolExecutor(workers) as ex:
         list(ex.map(lambda h: firmcrawl.crawl_host(h, None, 2.0, None, res[h]["urls"]), list(res)))

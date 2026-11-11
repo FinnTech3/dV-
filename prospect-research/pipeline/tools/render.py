@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import posixpath
+import re
 import shutil
 import sqlite3
 import zipfile
@@ -25,6 +26,43 @@ M = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 PR = "http://schemas.openxmlformats.org/package/2006/relationships"
 COLS = "ABCDEF"
+
+_TITLES = re.compile(r"(?i)^(?:(?:prof(?:essor)?|dr|mag|dipl|ing|sir|dame|rechtsanwalt|rechtsanw[aä]ltin|avv|me|maître|mr|mrs|ms)\.?\s*(?:iur\.?|jur\.?|habil\.?|h\.c\.|med\.?|rer\.?\s*nat\.?|rer\.?\s*pol\.?|-?\s*\w+\.)?\s+)+")
+_DEGREES = re.compile(r"(?i)[,\s]+(?:LL\.?\s?M\.?|LLB|LL\.B\.|M\.?\s?Jur\.?|MBA|M\.?Sc\.?|B\.?Sc\.?|Ph\.?D\.?|M\.?Phil|MLaw|Dipl\.[- ]\w+\.?|MA|BA)(?![A-Za-z])[^,]*$")
+
+
+def clean_name(first: str, last: str) -> tuple[str, str]:
+    """Presentation-only tidy: titles ('Dr.') out of the first name, degrees ('LL.M. (Cambridge)') out of the last name."""
+    full = f"{first or ''} {last or ''}".strip()
+    full = re.sub(r"\s*\([^)]*\)\s*", " ", full).strip()                 # nicknames and place-of-degree in brackets
+    if re.match(r"^\S+\s*,", full) or re.search(r"(?i),\s*(lawyer|attorney|partner|counsel)\b.*\bin\b", full):
+        return (first or "").strip(), ""                   # the 'last name' is a job description: no usable surname
+    full = re.sub(r"(?i),\s*(née|nee|geb\.)\s.*$", "", full)
+    full = re.sub(r"(?i),\s*(dr|prof)\.?$", "", full)
+    for _ in range(3):
+        full = _DEGREES.sub("", full).strip(" ,")
+    full = _TITLES.sub("", full).strip(" ,")
+    parts = full.split()
+    if len(parts) < 2:
+        return (first or "").strip(), (last or "").strip()
+    given = _TITLES.sub("", (first or "").strip() + " ").strip()
+    if given and full.lower().startswith(given.lower() + " ") and len(full) > len(given) + 1:
+        return given, full[len(given):].strip()
+    i = 1
+    while i < len(parts) - 1 and re.fullmatch(r"[A-Z]\.?", parts[i]):
+        i += 1                                          # middle initials stay with the first name
+    return " ".join(parts[:i]), " ".join(parts[i:])
+
+
+_SENTENCEISH = re.compile(r"(?i)(\bis an?\b|\bist\b|\bber[aä]t\b|\bspecialis|\badvises\b|\bhas\b|\bwhich\b|\bwho\b|\bwith over\b|^(he|she|they)\b)")
+
+
+def clean_occupation(occ: str | None, employer: str | None) -> str | None:
+    """Presentation-only: a sentence fragment is not a job title; fall back to the neutral 'Professional at <firm>'."""
+    occ = re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), (occ or "")).strip()    # undecoded \u00fc escapes from page metadata
+    if occ and (not occ[0].isalnum() or len(occ) > 90 or _SENTENCEISH.search(occ) or occ[0].islower()):
+        return f"Professional at {employer}" if employer else None
+    return occ or None
 
 
 class ExportBlocked(RuntimeError):
@@ -277,3 +315,82 @@ def write_review_export(conn: sqlite3.Connection, path: Path) -> int:
     write_tsv([[p["first_name"], p["last_name"], p["occupation"], p["phone_e164"], p["phone_type"], p["email"],
                 p["linkedin_url"], p["grade"], p["crm_export_hold"]] for p in rows], path)
     return len(rows)
+
+def everyone(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+    """Everyone with a name and a telephone number who is not a duplicate, not rejected and not suppressed.
+
+    Used for the quantity-first presentation sheet the project lead asked for. Order: complete records first, then people
+    whose LinkedIn URL has not been found yet, then the quantity fill (batch FILLER) last.
+    """
+    return conn.execute(
+        """SELECT * FROM persons WHERE status IN ('PASS','ASK') AND suppressed=0 AND synthetic=0
+              AND COALESCE(do_not_contact,'unknown') != 'yes'
+              AND phone_e164 IS NOT NULL AND TRIM(COALESCE(first_name,'')) != '' AND TRIM(COALESCE(last_name,'')) != ''
+           ORDER BY (COALESCE(batch_id,'') LIKE 'FILLER%') ASC, (status='PASS') DESC, (linkedin_url IS NOT NULL) DESC, employer, last_name, first_name""").fetchall()
+
+
+def export_everyone(conn: sqlite3.Connection, template: Path, out_path: Path, settings: dict, details: bool = False) -> dict:
+    """Write everyone from `everyone()` into a fresh copy of the template (same six columns, table and styles).
+
+    The export register is not touched; this is a separate presentation workbook. Numbers go in the Mobile Number column as text
+    whatever their type; with details=True the type, firm and status are also written to a companion workbook (`<name>_details.xlsx`).
+    """
+    template, out_path = Path(template), Path(out_path)
+    if template.resolve() == out_path.resolve():
+        raise ExportBlocked("refusing to write to the original template")
+    exp = settings["export"]
+    before = inspect(template, settings)
+    if before["headings"] != exp["expected_headings"] or before["rows"]:
+        raise ExportBlocked("template heading row differs from expected, or it already holds rows")
+    people, seen, rows = [], set(), []
+    for p in everyone(conn):
+        first, last = clean_name(p["first_name"], p["last_name"])
+        key = ((first + " " + last).lower(), p["cur_res_country"] or "")
+        if not first or not last or key in seen:
+            continue                                   # same person listed twice under different spellings of the title or degree
+        seen.add(key)
+        people.append(p)
+        rows.append([first, last, clean_occupation(p["occupation"], p["employer"]), p["phone_e164"], p["email"], p["linkedin_url"]])
+    if not people:
+        raise ExportBlocked("nobody to export")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    records = [(2 + i, r) for i, r in enumerate(rows)]
+    last = records[-1][0]
+    with zipfile.ZipFile(template) as zin:
+        sheet_part = _sheet_part(zin, exp["sheet"])
+        tables = _table_parts(zin, sheet_part)
+        with zipfile.ZipFile(out_path, "w") as zout:
+            for info in zin.infolist():
+                payload = zin.read(info.filename)
+                if info.filename == sheet_part:
+                    payload = _patch_sheet(payload, records)
+                elif info.filename in tables:
+                    patched = _patch_table(payload, last)
+                    if patched is not None:
+                        payload = patched
+                zout.writestr(info, payload, compress_type=info.compress_type)
+    if not details:
+        check = verify_workbook(out_path, template, records, settings)
+        return {"output": str(out_path), "details": None, "rows_written": len(records), "with_linkedin": sum(1 for p in people if p["linkedin_url"]),
+                "complete": sum(1 for p in people if p["status"] == "PASS"), "verification": check}
+    # companion workbook: what each number is and how certain the record is
+    labels = {"mobile": "mobile", "direct_work_mobile": "direct work mobile", "direct_landline": "direct landline",
+              "shared_switchboard": "shared office number", "unknown": "number type not stated"}
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Details"
+    ws.append(["Row in main sheet", "First name", "Last name", "Telephone", "Telephone type", "Occupation", "Firm", "LinkedIn", "Current country",
+               "City", "Status", "Grade", "Why not complete", "Source page"])
+    for (rownum, vals), p in zip(records, people):
+        ws.append([rownum, vals[0], vals[1], p["phone_e164"], labels.get(p["phone_type"], p["phone_type"]), vals[2],
+                   p["employer"], p["linkedin_url"], p["cur_res_country"], p["cur_res_city"],
+                   "complete" if p["status"] == "PASS" else "incomplete", p["grade"], None if p["status"] == "PASS" else p["status_reason"],
+                   p["phone_source_url"]])
+    for col in ws.iter_cols(min_row=2, min_col=4, max_col=4):
+        for c in col:
+            c.data_type = "s"
+    details = out_path.with_name(out_path.stem + "_details.xlsx")
+    wb.save(details)
+    check = verify_workbook(out_path, template, records, settings)
+    return {"output": str(out_path), "details": str(details), "rows_written": len(records), "with_linkedin": sum(1 for p in people if p["linkedin_url"]),
+            "complete": sum(1 for p in people if p["status"] == "PASS"), "verification": check}

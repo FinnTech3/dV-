@@ -69,6 +69,10 @@ def crawl_conn() -> sqlite3.Connection:
     CRAWL_DB.parent.mkdir(parents=True, exist_ok=True)
     c = sqlite3.connect(str(CRAWL_DB), check_same_thread=False, timeout=60)
     c.row_factory = sqlite3.Row
+    try:
+        c.execute("PRAGMA journal_mode=WAL")          # several crawlers and re-readers write this file at once
+    except sqlite3.OperationalError:
+        pass
     c.execute("""CREATE TABLE IF NOT EXISTS pages (url TEXT PRIMARY KEY, host TEXT, slug TEXT, status INTEGER, fetched TEXT,
                  name TEXT, role TEXT, tels TEXT, linkedin TEXT, city TEXT, regions TEXT, origin TEXT, sentence TEXT,
                  has_years INTEGER, lived INTEGER, text_len INTEGER)""")
@@ -85,6 +89,63 @@ def _text(markup: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(markup)).strip()
 
 
+TITLE_WORDS = re.compile(r"(?i)\b(partner|of counsel|counsel|associate|senior associate|managing associate|director|managing director|principal|"
+                         r"head of|chair|chairman|president|professor|lecturer|dean|fellow|consultant|manager|engineer|architect|"
+                         r"attorney|solicitor|barrister|lawyer|rechtsanwalt|rechtsanw[aä]ltin|avocat|abogad[oa]|advogad[oa]|avvocato|"
+                         r"counselor|specialist|analyst|executive|officer|vice president|founder|co-founder|researcher|scientist)\b")
+TITLE_CLASS = re.compile(r'(?is)<(?:span|div|p|h[2-6]|li)[^>]+class="[^"]*\b(?:position|job-?title|jobtitle|role|designation|person-title|'
+                         r'staff-title|team-title|profile-title|title)\b[^"]*"[^>]*>(.*?)</(?:span|div|p|h[2-6]|li)>')
+
+
+TLD_REGION = {"de": "DE", "fr": "FR", "es": "ES", "pt": "PT", "ch": "CH", "at": "AT", "be": "BE", "lu": "LU", "it": "IT", "se": "SE",
+              "dk": "DK", "fi": "FI", "pl": "PL", "cz": "CZ", "gr": "GR", "hr": "HR", "hu": "HU", "sk": "SK", "si": "SI", "ro": "RO",
+              "bg": "BG", "ee": "EE", "lv": "LV", "lt": "LT"}
+NATIONAL = re.compile(r"(?i)(?<![\w+])((?:mob(?:ile|il)?|handy|cell(?:ulare)?|m[oó]vil|t[eé]l(?:[eé]fono|[eé]phone|efon|efono)?|phone|direct|durchwahl|"
+                      r"t|m|d)\s*[.:]?\s*)(\(?0?\d{1,4}\)?[\s./-]?\d[\d\s().\/-]{5,16}\d)")
+
+
+def tld_region(url: str) -> str | None:
+    host = re.sub(r"^https?://", "", url).split("/", 1)[0].lower()
+    return TLD_REGION.get(host.rsplit(".", 1)[-1])
+
+
+def _national_numbers(text: str, region: str | None) -> list[tuple[str, str]]:
+    """Labelled national-format numbers ('Tel. 02 2399 4567') read against the country of the site's domain. Unlabelled digits are never taken."""
+    out = []
+    if not region:
+        return out
+    for m in NATIONAL.finditer(text):
+        label, raw = m.group(1), m.group(2)
+        if re.search(r"(?i)fax", text[max(0, m.start() - 12):m.start()]):
+            continue
+        if raw.strip().startswith("+") or re.match(r"\s*00", raw):
+            continue
+        try:
+            num = phonenumbers.parse(raw, region)
+        except phonenumbers.NumberParseException:
+            continue
+        if phonenumbers.is_valid_number(num) and phonenumbers.region_code_for_number(num) == region:
+            out.append((raw.strip(), label))
+    return out
+
+
+def _title_near_name(body: str) -> str:
+    """Job title as the page states it: an element classed as a position/title, or the first short heading-like text right after the name."""
+    h1 = re.search(r"(?is)</h1>", body)
+    start = h1.end() if h1 else 0
+    window = body[start:start + 1600]
+    m = TITLE_CLASS.search(window)
+    if m:
+        txt = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", m.group(1)))).strip()
+        if 3 < len(txt) < 70 and TITLE_WORDS.search(txt):
+            return txt
+    for seg in re.split(r"<[^>]+>", window):
+        seg = re.sub(r"\s+", " ", html.unescape(seg)).strip()
+        if 3 < len(seg) < 70 and TITLE_WORDS.search(seg) and not re.search(r"[.!?]\s*$", seg) and not seg.lower().startswith(("the ", "our ", "we ")):
+            return seg
+    return ""
+
+
 def extract(url: str, body: str) -> dict:
     """Pull name, role, phones (with the label the page gives them), LinkedIn link and work-history sentence."""
     h1 = re.search(r"(?is)<h1[^>]*>(.*?)</h1>", body)
@@ -98,6 +159,10 @@ def extract(url: str, body: str) -> dict:
         if og and name and name.split()[-1] in og.group(1):
             rest = re.split(r"[|\-–,]", html.unescape(og.group(1)).replace(name, ""), maxsplit=3)
             role = next((p.strip() for p in rest if 3 < len(p.strip()) < 70), "")
+    if not role or not TITLE_WORDS.search(role):      # a page-title fragment such as the firm name is not a job title
+        near = _title_near_name(body)
+        if near:
+            role = near
     tels = []
     for m in re.finditer(r'(?is)<a[^>]+href="tel:([^"]+)"[^>]*>(.*?)</a>', body):
         raw = html.unescape(m.group(1)).replace("%20", " ").replace("(0)", "")
@@ -105,7 +170,10 @@ def extract(url: str, body: str) -> dict:
             continue
         ctx = _text(body[max(0, m.start() - 160):m.start()])[-28:] + " " + m.group(0).split(">", 1)[0]
         try:
-            num = phonenumbers.parse(raw if raw.strip().startswith("+") else "+" + re.sub(r"^00", "", raw.strip()), None)
+            if raw.strip().startswith("+") or re.match(r"\s*00", raw) or not tld_region(url):
+                num = phonenumbers.parse(raw if raw.strip().startswith("+") else "+" + re.sub(r"^00", "", raw.strip()), None)
+            else:
+                num = phonenumbers.parse(raw, tld_region(url))      # national format, read against the site's country
         except phonenumbers.NumberParseException:
             continue
         if not phonenumbers.is_valid_number(num):
@@ -134,6 +202,13 @@ def extract(url: str, body: str) -> dict:
                     hit["label"] = label
             else:
                 tels.append({"raw": raw.strip(), "e164": e164, "region": phonenumbers.region_code_for_number(num), "label": label})
+    if not tels and tld_region(url):
+        for raw, lab in _national_numbers(_text(body), tld_region(url)):
+            num = phonenumbers.parse(raw, tld_region(url))
+            e164 = phonenumbers.format_number(num, phonenumbers.PhoneNumberFormat.E164)
+            label = "mobile" if MOBILE.search(lab) else ("direct_landline" if DIRECT.search(lab) else "unknown")
+            if e164 not in [x["e164"] for x in tels]:
+                tels.append({"raw": raw, "e164": e164, "region": phonenumbers.region_code_for_number(num), "label": label})
     li = None
     for m in re.finditer(r'href="(https?://[a-z.]*linkedin\.com/in/[^"?#]+)', body):
         li = linkedin.clean(html.unescape(m.group(1)))
@@ -277,6 +352,15 @@ SECTOR = {**{h: "executive search firm consultant pages" for h in ("www.egonzehn
 PRESENT = re.compile(r"\b(is based|currently|is a .{0,40} in (our|the) (London|Dublin|Amsterdam)|based in (London|Dublin|Amsterdam|Bristol|Manchester|Edinburgh|Leeds|Birmingham|Reading|Glasgow))\b", re.IGNORECASE)
 
 
+def clean_role(role: str | None, firm: str, name: str) -> str:
+    """A job title the page states, or '' when the text is the firm name, part of the person's name or page chrome."""
+    role = (role or "").strip()
+    if (len(role) < 4 or role.lower() == firm.lower() or role.lower() in name.lower()
+            or role.lower() in ("profile of", "about", "lawyers", "people", "team")):
+        return ""
+    return role
+
+
 def stage(settings: dict, out_dir: Path | None = None) -> dict:
     """Turn crawl results into staging batches (one per firm). Returns counts including why pages were left out."""
     conn = crawl_conn()
@@ -310,10 +394,7 @@ def stage(settings: dict, out_dir: Path | None = None) -> dict:
         place = PLACE.search(r["sentence"]).group(1)
         ev = lambda c, lv, ext, lim, **kw: {"criterion": c, "level": lv, "source_url": r["url"], "organisation": firm, "reliability": "PRIMARY",
                                            "publication_date": None, "retrieval_date": r["fetched"][:10], "extract": ext, "limitations": lim, **kw}
-        role = (r["role"] or "").strip()
-        if (len(role) < 4 or role.lower() == firm.lower() or role.lower() in r["name"].lower()
-                or role.lower() in ("profile of", "about", "lawyers", "people", "team")):
-            role = ""                                  # not a job title: firm name, part of the person's name or page chrome
+        role = clean_role(r["role"], firm, r["name"])
         cand = {
             "first_name": r["name"].split(" ", 1)[0], "last_name": r["name"].split(" ", 1)[1] if " " in r["name"] else "",
             "occupation": (f"{role}, {firm}" if role else f"Professional at {firm} (title not stated on profile)"), "employer": firm,
