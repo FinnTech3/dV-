@@ -31,5 +31,8 @@ python -m pytest -q
 ```
 Checkpoint after every batch and before any long operation. Stop when countable = 1,000: dedupe, export, report, then wait for a new target.
 
+## Research library
+`pipeline/sources/handoff/` holds the original research assets; `python -m pipeline.tools.handoff` merges them into the database (queries, organisations, events, employers, city plan). None of it is a prospect. The native search tool ignores Boolean operators, so use plain-language queries. See `docs/handoff_merge.md`.
+
 ## Session limits
 State lives in the local SQLite database, which is **not** in git. In an ephemeral cloud container the database is lost when the container is reclaimed; see the open issue in `docs/unsure.md` before starting person-level work.
