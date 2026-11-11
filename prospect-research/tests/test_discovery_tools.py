@@ -37,3 +37,12 @@ def test_announcement_miner_needs_name_origin_office_and_a_move_and_ignores_clie
     assert newsmine.extract_moves(client, names) == []
     assert newsmine.extract_moves("Someone Else relocates from our London office to Madrid.", names) == []   # unknown names are never guessed
     assert newsmine.SLUG.search("alex-sample-relocates-to-frankfurt") and not newsmine.SLUG.search("transfer-pricing-update")
+
+
+def test_title_taken_from_page_element_not_from_page_title_fragment():
+    from pipeline.tools import firmcrawl
+    page = ('<head><meta property="og:title" content="Synthetic Person | Example Firm" /></head><body><h1>Synthetic Person</h1>'
+            '<h4><span class="positions"><span class="position">Counsel</span></span></h4><p>T +49 69 000000</p></body>')
+    assert firmcrawl.extract("https://example.com/p", page)["role"] == "Counsel"
+    bare = '<h1>Synthetic Person</h1><p>Welcome to our firm and the people who make it work every day.</p>'
+    assert firmcrawl.extract("https://example.com/q", bare)["role"] == ""          # no stated title: stays blank, never invented

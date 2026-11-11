@@ -85,6 +85,31 @@ def _text(markup: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(markup)).strip()
 
 
+TITLE_WORDS = re.compile(r"(?i)\b(partner|of counsel|counsel|associate|senior associate|managing associate|director|managing director|principal|"
+                         r"head of|chair|chairman|president|professor|lecturer|dean|fellow|consultant|manager|engineer|architect|"
+                         r"attorney|solicitor|barrister|lawyer|rechtsanwalt|rechtsanw[aä]ltin|avocat|abogad[oa]|advogad[oa]|avvocato|"
+                         r"counselor|specialist|analyst|executive|officer|vice president|founder|co-founder|researcher|scientist)\b")
+TITLE_CLASS = re.compile(r'(?is)<(?:span|div|p|h[2-6]|li)[^>]+class="[^"]*\b(?:position|job-?title|jobtitle|role|designation|person-title|'
+                         r'staff-title|team-title|profile-title|title)\b[^"]*"[^>]*>(.*?)</(?:span|div|p|h[2-6]|li)>')
+
+
+def _title_near_name(body: str) -> str:
+    """Job title as the page states it: an element classed as a position/title, or the first short heading-like text right after the name."""
+    h1 = re.search(r"(?is)</h1>", body)
+    start = h1.end() if h1 else 0
+    window = body[start:start + 1600]
+    m = TITLE_CLASS.search(window)
+    if m:
+        txt = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", m.group(1)))).strip()
+        if 3 < len(txt) < 70 and TITLE_WORDS.search(txt):
+            return txt
+    for seg in re.split(r"<[^>]+>", window):
+        seg = re.sub(r"\s+", " ", html.unescape(seg)).strip()
+        if 3 < len(seg) < 70 and TITLE_WORDS.search(seg) and not re.search(r"[.!?]\s*$", seg) and not seg.lower().startswith(("the ", "our ", "we ")):
+            return seg
+    return ""
+
+
 def extract(url: str, body: str) -> dict:
     """Pull name, role, phones (with the label the page gives them), LinkedIn link and work-history sentence."""
     h1 = re.search(r"(?is)<h1[^>]*>(.*?)</h1>", body)
@@ -98,6 +123,10 @@ def extract(url: str, body: str) -> dict:
         if og and name and name.split()[-1] in og.group(1):
             rest = re.split(r"[|\-–,]", html.unescape(og.group(1)).replace(name, ""), maxsplit=3)
             role = next((p.strip() for p in rest if 3 < len(p.strip()) < 70), "")
+    if not role or not TITLE_WORDS.search(role):      # a page-title fragment such as the firm name is not a job title
+        near = _title_near_name(body)
+        if near:
+            role = near
     tels = []
     for m in re.finditer(r'(?is)<a[^>]+href="tel:([^"]+)"[^>]*>(.*?)</a>', body):
         raw = html.unescape(m.group(1)).replace("%20", " ").replace("(0)", "")
