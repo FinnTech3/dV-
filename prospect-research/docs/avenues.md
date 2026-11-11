@@ -41,5 +41,20 @@ Executive search (useful: consultants have international careers), patent and tr
 **Idea.** A club that publishes short biographies of its members is publishing residence and career evidence voluntarily.
 **Result.** About 30 members, each with a biography page and the member's own LinkedIn link. Biographies state current residence (often the year of the move) and past steps in the Netherlands. No phone numbers. Six members were recorded as a phone-completion reserve; none qualifies, because the members' own websites either print only a company number, print two numbers without naming whose, or refuse automated access.
 
+## 9. Routes tested on 11 November after the handoff merge, with measured results
+
+Each route was sampled before any large crawl, so effort went where the evidence pointed. Failures are recorded because they rule things out.
+
+| Route | Idea | Measured result | Decision |
+|---|---|---|---|
+| Relocation-announcement mining (`newsmine.py`) | Firms announce moves ("relocates from our London office to Frankfurt"); a dated first-party statement of both the UK posting and the move, fused by exact name with the person's own profile for the phone number | 12 firms, about 275 announcement pages sampled, 2 sentence hits, both people *joining* London offices | Dropped. Tool and tests kept. |
+| University and research-institute staff pages | CVs list postdocs and fellowships abroad; staff pages list direct lines | 125 sites probed; about 30 expose 100+ person pages. 12-14 pages sampled from 20 of them. Phone numbers are common (hospital and institute pages 12/12) but a UK, Irish or Dutch career appears in 0-8% of pages; business-school faculty was best (ESMT 8%, with LinkedIn on half the pages) | Crawled only ESMT; the rest are not worth the hours at these rates |
+| Consultancy expert pages (BCG, Simon-Kucher, Buro Happold) | Senior staff pages with direct line and the person's own LinkedIn link | BCG: phone on 12/12, LinkedIn on 11/12 sampled pages, 1 UK career in 12 | Full crawl running; candidates from BCG arrive with both a phone and a LinkedIn link |
+| Open-data seed (`osmseed.py`) | Generate source sites from OpenStreetMap (lawyers, architects, estate agents, clinics, schools with a website, by city) instead of from directories | Madrid: 964 sites generated. First 200 probed: 5 (2.5%) expose any people pages, because most small firms do not list individuals in their sitemaps. The service also refuses large combined queries, so smaller ones are needed | Works as a generator but the conversion is too low to scale blindly |
+| Leisure and hospitality professionals | Golf pros, ski-school directors, dive-centre and guest-house owners publish personal mobiles for bookings and tell a career story | Seed tool built (resort regions, sport and tourism tags). Not run: the bottleneck is that these sites put the whole team on one page, not one page per person, which the per-person crawler cannot read | Needs a team-page parser; not built |
+| Member-company sites from chamber directories | See section 7 | 604 sites, 46 with people pages, 16 crawled; no new valid people | Done |
+
+**What the measurements say.** Across every route the same three rates multiply: a site must expose person pages (about 2-8% of small sites, most large firms), the page must carry a number that is the person's own (about 20-50%), and it must describe a past in the UK, Ireland or the Netherlands (about 1-8%). That is why 80,000 pages produced about 250 people. No route found so far beats the larger law firms' 6-8%.
+
 ## What limits the total
 In order of effect: (1) the number must be the person's alone; (2) there must be evidence of past work, not just study or a qualification, in an origin country; (3) most people with that history have not left. Relaxing (1) to accept an office number would add roughly 180 people immediately and open up avenue 3.
