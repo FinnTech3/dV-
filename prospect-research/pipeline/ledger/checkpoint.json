@@ -1,9 +1,9 @@
 {
-  "written": "2026-11-11T09:09:31Z",
+  "written": "2026-11-11T09:13:19Z",
   "target": 1000,
   "remaining": 789,
   "persons_by_status": {
-    "ASK": 294,
+    "ASK": 297,
     "DUPLICATE": 1,
     "PASS": 211,
     "REJECT": 8
@@ -23,5 +23,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "LinkedIn second pass (batch 1) applied"
+  "note": "Latham crawl complete; 2 added"
 }
