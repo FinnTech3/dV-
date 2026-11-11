@@ -1,18 +1,18 @@
 {
-  "written": "2026-11-11T13:44:23Z",
+  "written": "2026-11-11T14:16:36Z",
   "target": 1000,
-  "remaining": 728,
+  "remaining": 725,
   "persons_by_status": {
-    "ASK": 337,
-    "DUPLICATE": 13,
-    "PASS": 272,
+    "ASK": 343,
+    "DUPLICATE": 20,
+    "PASS": 275,
     "REJECT": 8
   },
   "pass_by_grade": {
-    "C": 109,
-    "D": 163
+    "C": 111,
+    "D": 164
   },
-  "countable": 272,
+  "countable": 275,
   "queue": {
     "pending": 105
   },
@@ -23,5 +23,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "Reviewed and ingested the retried sub-agent hosts (continental law and IP firms)"
+  "note": "All queued host pipelines reviewed and ingested; next discovery round launched"
 }
