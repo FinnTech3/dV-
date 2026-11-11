@@ -77,3 +77,11 @@ def test_linkprobe_keeps_person_style_links_and_drops_service_pages():
     assert "https://example.com/people/jane-example" in urls                      # same host
     assert not any("other.example.org" in u or u.endswith(".pdf") for u in urls)      # never leaves the host, skips documents
     assert linkprobe.NOT_PERSON.search("/people/contact-persons") and not linkprobe.NOT_PERSON.search("/people/jane-example")
+
+
+def test_national_format_number_read_against_site_country_and_fax_ignored():
+    from pipeline.tools import firmcrawl
+    page = '<h1>Synthetic Person</h1><p>Tel. 02 2399 4567 Fax 02 2399 4568 Order 12345678</p>'
+    tels = firmcrawl.extract("https://www.example.it/p", page)["tels"]
+    assert [t["e164"] for t in tels] == ["+390223994567"] and tels[0]["region"] == "IT"
+    assert firmcrawl.extract("https://www.example.com/p", page)["tels"] == []         # no country domain: no guess

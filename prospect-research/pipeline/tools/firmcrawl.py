@@ -97,6 +97,38 @@ TITLE_CLASS = re.compile(r'(?is)<(?:span|div|p|h[2-6]|li)[^>]+class="[^"]*\b(?:p
                          r'staff-title|team-title|profile-title|title)\b[^"]*"[^>]*>(.*?)</(?:span|div|p|h[2-6]|li)>')
 
 
+TLD_REGION = {"de": "DE", "fr": "FR", "es": "ES", "pt": "PT", "ch": "CH", "at": "AT", "be": "BE", "lu": "LU", "it": "IT", "se": "SE",
+              "dk": "DK", "fi": "FI", "pl": "PL", "cz": "CZ", "gr": "GR", "hr": "HR", "hu": "HU", "sk": "SK", "si": "SI", "ro": "RO",
+              "bg": "BG", "ee": "EE", "lv": "LV", "lt": "LT"}
+NATIONAL = re.compile(r"(?i)(?<![\w+])((?:mob(?:ile|il)?|handy|cell(?:ulare)?|m[oó]vil|t[eé]l(?:[eé]fono|[eé]phone|efon|efono)?|phone|direct|durchwahl|"
+                      r"t|m|d)\s*[.:]?\s*)(\(?0?\d{1,4}\)?[\s./-]?\d[\d\s().\/-]{5,16}\d)")
+
+
+def tld_region(url: str) -> str | None:
+    host = re.sub(r"^https?://", "", url).split("/", 1)[0].lower()
+    return TLD_REGION.get(host.rsplit(".", 1)[-1])
+
+
+def _national_numbers(text: str, region: str | None) -> list[tuple[str, str]]:
+    """Labelled national-format numbers ('Tel. 02 2399 4567') read against the country of the site's domain. Unlabelled digits are never taken."""
+    out = []
+    if not region:
+        return out
+    for m in NATIONAL.finditer(text):
+        label, raw = m.group(1), m.group(2)
+        if re.search(r"(?i)fax", text[max(0, m.start() - 12):m.start()]):
+            continue
+        if raw.strip().startswith("+") or re.match(r"\s*00", raw):
+            continue
+        try:
+            num = phonenumbers.parse(raw, region)
+        except phonenumbers.NumberParseException:
+            continue
+        if phonenumbers.is_valid_number(num) and phonenumbers.region_code_for_number(num) == region:
+            out.append((raw.strip(), label))
+    return out
+
+
 def _title_near_name(body: str) -> str:
     """Job title as the page states it: an element classed as a position/title, or the first short heading-like text right after the name."""
     h1 = re.search(r"(?is)</h1>", body)
@@ -138,7 +170,10 @@ def extract(url: str, body: str) -> dict:
             continue
         ctx = _text(body[max(0, m.start() - 160):m.start()])[-28:] + " " + m.group(0).split(">", 1)[0]
         try:
-            num = phonenumbers.parse(raw if raw.strip().startswith("+") else "+" + re.sub(r"^00", "", raw.strip()), None)
+            if raw.strip().startswith("+") or re.match(r"\s*00", raw) or not tld_region(url):
+                num = phonenumbers.parse(raw if raw.strip().startswith("+") else "+" + re.sub(r"^00", "", raw.strip()), None)
+            else:
+                num = phonenumbers.parse(raw, tld_region(url))      # national format, read against the site's country
         except phonenumbers.NumberParseException:
             continue
         if not phonenumbers.is_valid_number(num):
@@ -167,6 +202,13 @@ def extract(url: str, body: str) -> dict:
                     hit["label"] = label
             else:
                 tels.append({"raw": raw.strip(), "e164": e164, "region": phonenumbers.region_code_for_number(num), "label": label})
+    if not tels and tld_region(url):
+        for raw, lab in _national_numbers(_text(body), tld_region(url)):
+            num = phonenumbers.parse(raw, tld_region(url))
+            e164 = phonenumbers.format_number(num, phonenumbers.PhoneNumberFormat.E164)
+            label = "mobile" if MOBILE.search(lab) else ("direct_landline" if DIRECT.search(lab) else "unknown")
+            if e164 not in [x["e164"] for x in tels]:
+                tels.append({"raw": raw, "e164": e164, "region": phonenumbers.region_code_for_number(num), "label": label})
     li = None
     for m in re.finditer(r'href="(https?://[a-z.]*linkedin\.com/in/[^"?#]+)', body):
         li = linkedin.clean(html.unescape(m.group(1)))
