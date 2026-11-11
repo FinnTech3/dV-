@@ -30,9 +30,9 @@ from .probe import UA, probe_urls
 CRAWL_DB = db.PIPELINE / "evidence" / "crawl.sqlite"
 _lock = threading.Lock()
 
-UK = r"London|United Kingdom|\bU\.?K\.?\b|England|Scotland|Wales|Edinburgh|Manchester|Birmingham|Bristol|Leeds|Glasgow|Reading|Cambridge office|Londres|Reino Unido|Royaume-Uni|Gro(ß|ss)britannien|Vereinigte[sn]? K(ö|oe)nigreich|Londra|Regno Unito"
-IE = r"Dublin|Ireland|Irland|Irlande|Irlanda"
-NL = r"Amsterdam|Rotterdam|The Hague|Den Haag|Netherlands|Niederlande|Pays-Bas|Pa(í|i)ses Bajos|Utrecht|Eindhoven"
+UK = r"Oxford|Cambridge|Imperial College|\bUCL\b|King'?s College London|Newcastle|Sheffield|Nottingham|Southampton|Durham|Warwick|Exeter|Liverpool|St Andrews|Aberdeen|Cardiff|Belfast|Hinxton|Norwich|Sussex|Lancaster|Leicester|London|United Kingdom|\bU\.?K\.?\b|England|Scotland|Wales|Edinburgh|Manchester|Birmingham|Bristol|Leeds|Glasgow|Reading|Cambridge office|Londres|Reino Unido|Royaume-Uni|Gro(ß|ss)britannien|Vereinigte[sn]? K(ö|oe)nigreich|Londra|Regno Unito"
+IE = r"Dublin|Galway|Limerick|Maynooth|Trinity College Dublin|Cork|Ireland|Irland|Irlande|Irlanda"
+NL = r"Leiden|Delft|Groningen|Wageningen|Eindhoven|Maastricht|Nijmegen|Radboud|Tilburg|Erasmus|Amsterdam|Rotterdam|The Hague|Den Haag|Netherlands|Niederlande|Pays-Bas|Pa(í|i)ses Bajos|Utrecht|Eindhoven"
 PLACE = re.compile(f"({UK}|{IE}|{NL})")
 WORK = re.compile(
     r"\b(worked|working (for|at|in)|practi[sc]ed|spent|was based|were based|trained (at|with|in)|training contract|"
@@ -40,11 +40,11 @@ WORK = re.compile(
     r"second(ed|ment)|associate (at|in|with)|lawyer (at|in|with)|solicitor (at|in|with)|years? (at|in|with)|"
     r"previously (at|with|in)|formerly (at|with|in|a|an)|office in|(London|Dublin|Amsterdam) office|"
     r"t(ä|ae)tig|arbeitete|Stationen? in|a travaill(é|e)|a exerc(é|e)|collaborat(eur|rice)|trabaj(ó|o) en|ejerci(ó|o)|trabalhou|"
-    r"exerceu|ha lavorato|werkzaam)\b", re.IGNORECASE)
+    r"exerceu|ha lavorato|werkzaam|post-?doc\w*|research (fellow|associate|assistant|scientist)|fellow(ship)? (at|in)|lecturer|senior lecturer|reader in|registrar|resident|house officer|specialty trainee|clinical fellow|group leader|principal investigator|visiting (scientist|professor|researcher)|honorary)\b", re.IGNORECASE)
 EDU = re.compile(r"(LL\.?\s?M|LL\.?\s?B|universit|studied|studies|degree|college|school of|King'?s|\bUCL\b|\bLSE\b|"
                  r"Oxford|Cambridge|graduat|studium|studierte|dipl(ô|o)m|master|ph\.?d|doctor|erasmus|exchange|"
                  r"licenci|máster|mestrado|laurea|scholar)", re.IGNORECASE)
-HARD_WORK = re.compile(r"\b(worked|practi[sc]ed|training contract|associate|solicitor (at|in|with)|second(ed|ment)|office|"
+HARD_WORK = re.compile(r"\b(worked|practi[sc]ed|training contract|associate|solicitor (at|in|with)|second(ed|ment)|office|post-?doc\w*|research (fellow|associate|scientist)|lecturer|registrar|resident|clinical fellow|group leader|visiting|"
                        r"t(ä|ae)tig|a travaill|a exerc|trabaj|trabalh|career)\b", re.IGNORECASE)
 NOISE = re.compile(r"(clients? (in|based|from)|London[- ]based|Stock Exchange|\bLCIA\b|Court of|Law Society|admitted|"
                    r"member of|lectur|speaker|conference|listed (on|in)|headquartered|investors? (in|from)|"
@@ -172,10 +172,10 @@ def _prefer(urls: list[str]) -> list[str]:
     return sorted(best.values())
 
 
-def crawl_host(host: str, limit: int | None = None, delay: float = 2.0, pat: str | None = None) -> None:
+def crawl_host(host: str, limit: int | None = None, delay: float = 2.0, pat: str | None = None, urls: list[str] | None = None) -> None:
     conn = crawl_conn()
     try:
-        urls = _prefer(probe_urls(host, pat) if pat else probe_urls(host))
+        urls = _prefer(urls if urls is not None else (probe_urls(host, pat) if pat else probe_urls(host)))
     except Exception as exc:
         with _lock:
             conn.execute("INSERT OR REPLACE INTO hosts VALUES (?,?,?)", (host, "error", str(exc)[:200])); conn.commit()
@@ -216,7 +216,7 @@ def crawl_host(host: str, limit: int | None = None, delay: float = 2.0, pat: str
 
 
 SMALL_SITE_PAT = (r"/(people|lawyers|professionals|team|our-team|the-team|meet-the-team|team-members|our-people|experts|profiles?|consultants?|advisors?|advisers?|"
-                  r"attorneys|staff|partners|agents?|anwaelte|avocats?|person|mitarbeiter|equipo|equipe|equipa|ons-team|over-ons|medewerkers|about-us/team|about/team)/[^/?]+")
+                  r"attorneys|staff|partners|agents?|pros|professionals-team|our-pros|our-professionals|coaches|coach|instructors?|teachers?|guides?|owners?|hosts?|your-hosts|meet-us|meet-the-owners|about-the-team|anwaelte|avocats?|person|mitarbeiter|equipo|equipe|equipa|ons-team|over-ons|medewerkers|about-us/team|about/team)/[^/?]+")
 
 
 def crawl(hosts: list[str], limit: int | None = None, pat: str | None = None) -> None:
