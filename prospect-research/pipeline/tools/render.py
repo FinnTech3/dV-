@@ -59,8 +59,8 @@ _SENTENCEISH = re.compile(r"(?i)(\bis an?\b|\bist\b|\bber[aä]t\b|\bspecialis|\b
 
 def clean_occupation(occ: str | None, employer: str | None) -> str | None:
     """Presentation-only: a sentence fragment is not a job title; fall back to the neutral 'Professional at <firm>'."""
-    occ = (occ or "").strip()
-    if occ and (len(occ) > 90 or _SENTENCEISH.search(occ) or occ[0].islower()):
+    occ = re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), (occ or "")).strip()    # undecoded \u00fc escapes from page metadata
+    if occ and (not occ[0].isalnum() or len(occ) > 90 or _SENTENCEISH.search(occ) or occ[0].islower()):
         return f"Professional at {employer}" if employer else None
     return occ or None
 
@@ -320,13 +320,13 @@ def everyone(conn: sqlite3.Connection) -> list[sqlite3.Row]:
     """Everyone with a name and a telephone number who is not a duplicate, not rejected and not suppressed.
 
     Used for the quantity-first presentation sheet the project lead asked for. Order: complete records first, then people
-    whose LinkedIn URL has not been found yet.
+    whose LinkedIn URL has not been found yet, then the quantity fill (batch FILLER) last.
     """
     return conn.execute(
         """SELECT * FROM persons WHERE status IN ('PASS','ASK') AND suppressed=0 AND synthetic=0
               AND COALESCE(do_not_contact,'unknown') != 'yes'
               AND phone_e164 IS NOT NULL AND TRIM(COALESCE(first_name,'')) != '' AND TRIM(COALESCE(last_name,'')) != ''
-           ORDER BY (status='PASS') DESC, (linkedin_url IS NOT NULL) DESC, employer, last_name, first_name""").fetchall()
+           ORDER BY (COALESCE(batch_id,'') LIKE 'FILLER%') ASC, (status='PASS') DESC, (linkedin_url IS NOT NULL) DESC, employer, last_name, first_name""").fetchall()
 
 
 def export_everyone(conn: sqlite3.Connection, template: Path, out_path: Path, settings: dict, details: bool = False) -> dict:
