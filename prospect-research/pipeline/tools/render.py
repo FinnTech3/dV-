@@ -28,7 +28,7 @@ PR = "http://schemas.openxmlformats.org/package/2006/relationships"
 COLS = "ABCDEF"
 
 _TITLES = re.compile(r"(?i)^(?:(?:prof(?:essor)?|dr|mag|dipl|ing|sir|dame|rechtsanwalt|rechtsanw[aä]ltin|avv|me|maître|mr|mrs|ms)\.?\s*(?:iur\.?|jur\.?|habil\.?|h\.c\.|med\.?|rer\.?\s*nat\.?|rer\.?\s*pol\.?|-?\s*\w+\.)?\s+)+")
-_DEGREES = re.compile(r"(?i)[,\s]+(?:LL\.?\s?M\.?|LLB|LL\.B\.|MJur|MBA|M\.?Sc\.?|B\.?Sc\.?|Ph\.?D\.?|M\.?Phil|MLaw|Dipl\.[- ]\w+\.?|MA|BA)(?![A-Za-z])[^,]*$")
+_DEGREES = re.compile(r"(?i)[,\s]+(?:LL\.?\s?M\.?|LLB|LL\.B\.|M\.?\s?Jur\.?|MBA|M\.?Sc\.?|B\.?Sc\.?|Ph\.?D\.?|M\.?Phil|MLaw|Dipl\.[- ]\w+\.?|MA|BA)(?![A-Za-z])[^,]*$")
 
 
 def clean_name(first: str, last: str) -> tuple[str, str]:
@@ -329,11 +329,11 @@ def everyone(conn: sqlite3.Connection) -> list[sqlite3.Row]:
            ORDER BY (status='PASS') DESC, (linkedin_url IS NOT NULL) DESC, employer, last_name, first_name""").fetchall()
 
 
-def export_everyone(conn: sqlite3.Connection, template: Path, out_path: Path, settings: dict) -> dict:
+def export_everyone(conn: sqlite3.Connection, template: Path, out_path: Path, settings: dict, details: bool = False) -> dict:
     """Write everyone from `everyone()` into a fresh copy of the template (same six columns, table and styles).
 
     The export register is not touched; this is a separate presentation workbook. Numbers go in the Mobile Number column as text
-    whatever their type; the type, firm and status are written to a companion workbook (`<name>_details.xlsx`).
+    whatever their type; with details=True the type, firm and status are also written to a companion workbook (`<name>_details.xlsx`).
     """
     template, out_path = Path(template), Path(out_path)
     if template.resolve() == out_path.resolve():
@@ -369,6 +369,10 @@ def export_everyone(conn: sqlite3.Connection, template: Path, out_path: Path, se
                     if patched is not None:
                         payload = patched
                 zout.writestr(info, payload, compress_type=info.compress_type)
+    if not details:
+        check = verify_workbook(out_path, template, records, settings)
+        return {"output": str(out_path), "details": None, "rows_written": len(records), "with_linkedin": sum(1 for p in people if p["linkedin_url"]),
+                "complete": sum(1 for p in people if p["status"] == "PASS"), "verification": check}
     # companion workbook: what each number is and how certain the record is
     labels = {"mobile": "mobile", "direct_work_mobile": "direct work mobile", "direct_landline": "direct landline",
               "shared_switchboard": "shared office number", "unknown": "number type not stated"}

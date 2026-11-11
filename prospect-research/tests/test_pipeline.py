@@ -471,7 +471,7 @@ def test_full_export_keeps_template_structure_and_only_drops_unusable_people(con
     ingest(conn, settings, make(cur_res_country="GB", external_id="e4"))                                                # UK resident: rejected
     fake_real(conn)
     out = tmp_path / "all.xlsx"
-    res = render.export_everyone(conn, template, out, settings)
+    res = render.export_everyone(conn, template, out, settings, details=True)
     assert res["rows_written"] == 2 and res["verification"]["headings_exact"] and res["verification"]["value_mismatches"] == 0
     ws = openpyxl.load_workbook(out)["Sheet1"]
     assert (ws["A2"].value, ws["B2"].value) == ("Ada", "Example")                 # title and degree tidied in the sheet only
