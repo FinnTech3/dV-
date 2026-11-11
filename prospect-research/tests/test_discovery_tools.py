@@ -46,3 +46,22 @@ def test_title_taken_from_page_element_not_from_page_title_fragment():
     assert firmcrawl.extract("https://example.com/p", page)["role"] == "Counsel"
     bare = '<h1>Synthetic Person</h1><p>Welcome to our firm and the people who make it work every day.</p>'
     assert firmcrawl.extract("https://example.com/q", bare)["role"] == ""          # no stated title: stays blank, never invented
+
+
+def test_refresh_titles_upgrades_in_place_and_keeps_linkedin(conn, settings, tmp_path):
+    import sqlite3
+    from pipeline.tools import discover, firmcrawl
+    from tests.conftest import make
+    settings["waivers"] = {}
+    cand = make(occupation="Professional at Example Firm (title not stated on profile)", employer="Example Firm",
+                levels={"occupation": "MODERATE"}, external_id="firm:example.com:synthetic-slug")
+    res = discover.ingest_candidate(conn, cand, settings, synthetic=True)
+    crawl = sqlite3.connect(str(tmp_path / "crawl.sqlite")); crawl.row_factory = sqlite3.Row
+    crawl.execute("CREATE TABLE pages (host TEXT, slug TEXT, role TEXT, name TEXT)")
+    crawl.execute("INSERT INTO pages VALUES ('example.com','synthetic-slug','Counsel','Synthetic Person')")
+    out = discover.refresh_titles(conn, settings, crawl)
+    assert [o["uuid"] for o in out] == [res["uuid"]]
+    row = conn.execute("SELECT occupation, occupation_level, linkedin_url FROM persons WHERE uuid=?", (res["uuid"],)).fetchone()
+    assert row["occupation"] == "Counsel, Example Firm" and row["occupation_level"] == "STRONG" and row["linkedin_url"]
+    crawl.execute("UPDATE pages SET role='Example Firm'")                     # a firm name is not a title
+    assert discover.refresh_titles(conn, settings, crawl) == []

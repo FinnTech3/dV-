@@ -202,6 +202,42 @@ def revoke_waiver(conn: sqlite3.Connection) -> int:
     return cur.rowcount
 
 
+def refresh_titles(conn: sqlite3.Connection, settings: dict, crawl_conn, dry_run: bool = False) -> list[dict]:
+    """Upgrade records ingested without a job title when the (re-read) profile page does state one.
+
+    Only the occupation fields change; a LinkedIn URL, other evidence and the person's identity are kept, and the record is re-classified.
+    """
+    from . import firmcrawl
+    from . import verify as _v
+    out = []
+    for m in conn.execute("SELECT key, value FROM meta WHERE key LIKE 'ext:firm:%'").fetchall():
+        host, _, slug = m["key"][len("ext:firm:"):].partition(":")
+        p = conn.execute("SELECT * FROM persons WHERE uuid=? AND occupation LIKE '%(title not stated on profile)%' AND suppressed=0 "
+                         "AND status != 'DUPLICATE'", (m["value"],)).fetchone()
+        if not p:
+            continue
+        page = crawl_conn.execute("SELECT role, name FROM pages WHERE host=? AND slug=?", (host, slug)).fetchone()
+        role = firmcrawl.clean_role(page["role"], p["employer"], page["name"]) if page else ""
+        if not role:
+            continue
+        cand = dict(p)
+        cand["occupation"] = f"{role}, {p['employer']}"
+        levels = {"prev_residence": p["prev_res_level"], "prev_employment": p["prev_emp_level"], "cur_residence": p["cur_res_level"],
+                  "occupation": "STRONG", "phone": p["phone_level"]}
+        cand["phone_valid"] = True
+        res = _v.classify(cand, levels, settings)
+        out.append({"uuid": p["uuid"], "was": p["status"], "now": res["status"], "grade": res["grade"], "reserve": res["reserve"], "role": role})
+        if dry_run:
+            continue
+        hold = phone.crm_hold_reason(p["phone_type"], res["grade"], settings) if res["grade"] else None
+        conn.execute("UPDATE persons SET occupation=?, occupation_level='STRONG', grade=?, status=?, status_reason=?, reserve=?, crm_export_hold=? WHERE uuid=?",
+                     (cand["occupation"], res["grade"], res["status"], res["reason"], res["reserve"], hold, p["uuid"]))
+        conn.execute("UPDATE evidence SET extract=?, level='STRONG', effective_level='STRONG' WHERE person_uuid=? AND criterion='occupation'",
+                     (role, p["uuid"]))
+    conn.commit()
+    return out
+
+
 def suppress(conn: sqlite3.Connection, person_uuid: str, basis: str = "individual asked not to be contacted") -> None:
     """Mark a person as not to be contacted: removed from the countable pool and from every export."""
     conn.execute("""UPDATE persons SET suppressed = 1, do_not_contact = 'yes', contact_objection = 'yes',

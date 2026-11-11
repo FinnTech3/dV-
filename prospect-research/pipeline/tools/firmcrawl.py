@@ -310,6 +310,15 @@ SECTOR = {**{h: "executive search firm consultant pages" for h in ("www.egonzehn
 PRESENT = re.compile(r"\b(is based|currently|is a .{0,40} in (our|the) (London|Dublin|Amsterdam)|based in (London|Dublin|Amsterdam|Bristol|Manchester|Edinburgh|Leeds|Birmingham|Reading|Glasgow))\b", re.IGNORECASE)
 
 
+def clean_role(role: str | None, firm: str, name: str) -> str:
+    """A job title the page states, or '' when the text is the firm name, part of the person's name or page chrome."""
+    role = (role or "").strip()
+    if (len(role) < 4 or role.lower() == firm.lower() or role.lower() in name.lower()
+            or role.lower() in ("profile of", "about", "lawyers", "people", "team")):
+        return ""
+    return role
+
+
 def stage(settings: dict, out_dir: Path | None = None) -> dict:
     """Turn crawl results into staging batches (one per firm). Returns counts including why pages were left out."""
     conn = crawl_conn()
@@ -343,10 +352,7 @@ def stage(settings: dict, out_dir: Path | None = None) -> dict:
         place = PLACE.search(r["sentence"]).group(1)
         ev = lambda c, lv, ext, lim, **kw: {"criterion": c, "level": lv, "source_url": r["url"], "organisation": firm, "reliability": "PRIMARY",
                                            "publication_date": None, "retrieval_date": r["fetched"][:10], "extract": ext, "limitations": lim, **kw}
-        role = (r["role"] or "").strip()
-        if (len(role) < 4 or role.lower() == firm.lower() or role.lower() in r["name"].lower()
-                or role.lower() in ("profile of", "about", "lawyers", "people", "team")):
-            role = ""                                  # not a job title: firm name, part of the person's name or page chrome
+        role = clean_role(r["role"], firm, r["name"])
         cand = {
             "first_name": r["name"].split(" ", 1)[0], "last_name": r["name"].split(" ", 1)[1] if " " in r["name"] else "",
             "occupation": (f"{role}, {firm}" if role else f"Professional at {firm} (title not stated on profile)"), "employer": firm,

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import sqlite3
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
 
@@ -23,6 +24,15 @@ def targets(conn: sqlite3.Connection) -> dict[str, list[str]]:
     return out
 
 
+def _commit(conn: sqlite3.Connection) -> None:
+    for attempt in range(5):
+        try:
+            conn.commit()
+            return
+        except sqlite3.OperationalError:
+            time.sleep(5 * (attempt + 1))
+
+
 def run_host(host: str, urls: list[str], settings: dict) -> tuple[int, int, int]:
     conn = firmcrawl.crawl_conn()
     fixed = checked = 0
@@ -33,11 +43,16 @@ def run_host(host: str, urls: list[str], settings: dict) -> tuple[int, int, int]
             continue
         role = firmcrawl.extract(u, res.html)["role"]
         if role and firmcrawl.TITLE_WORDS.search(role):
-            conn.execute("UPDATE pages SET role=? WHERE url=?", (role, u))
-            fixed += 1
+            for attempt in range(5):                      # the crawl database has other writers; wait and retry, never abort the host
+                try:
+                    conn.execute("UPDATE pages SET role=? WHERE url=?", (role, u))
+                    fixed += 1
+                    break
+                except sqlite3.OperationalError:
+                    time.sleep(5 * (attempt + 1))
         if checked % 25 == 0:
-            conn.commit()
-    conn.commit()
+            _commit(conn)
+    _commit(conn)
     return len(urls), checked, fixed
 
 
@@ -50,7 +65,11 @@ def main(workers: int = 40) -> None:
         futs = {h: ex.submit(run_host, h, u, settings) for h, u in tg.items()}
         done = fixed = 0
         for h, f in futs.items():
-            n, c, x = f.result()
+            try:
+                n, c, x = f.result()
+            except Exception as exc:                  # one host failing must not stop the others
+                print(f"{h}: failed ({type(exc).__name__})", flush=True)
+                continue
             done += c; fixed += x
             print(f"{h}: {x}/{c} titles found", flush=True)
     print(f"done: {fixed} titles found in {done} pages", flush=True)
