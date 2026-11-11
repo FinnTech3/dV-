@@ -1,18 +1,18 @@
 {
-  "written": "2026-11-11T14:16:36Z",
+  "written": "2026-11-11T15:04:45Z",
   "target": 1000,
-  "remaining": 725,
+  "remaining": 713,
   "persons_by_status": {
-    "ASK": 343,
-    "DUPLICATE": 20,
-    "PASS": 275,
+    "ASK": 357,
+    "DUPLICATE": 39,
+    "PASS": 287,
     "REJECT": 8
   },
   "pass_by_grade": {
-    "C": 111,
-    "D": 164
+    "C": 112,
+    "D": 175
   },
-  "countable": 275,
+  "countable": 287,
   "queue": {
     "pending": 105
   },
@@ -23,5 +23,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "All queued host pipelines reviewed and ingested; next discovery round launched"
+  "note": "Patent, consultancy and gap-filling law-firm batches reviewed and ingested"
 }
