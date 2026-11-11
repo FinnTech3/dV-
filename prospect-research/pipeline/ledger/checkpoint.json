@@ -1,18 +1,18 @@
 {
-  "written": "2026-11-11T09:07:14Z",
+  "written": "2026-11-11T09:09:31Z",
   "target": 1000,
-  "remaining": 791,
+  "remaining": 789,
   "persons_by_status": {
-    "ASK": 296,
+    "ASK": 294,
     "DUPLICATE": 1,
-    "PASS": 209,
+    "PASS": 211,
     "REJECT": 8
   },
   "pass_by_grade": {
     "C": 65,
-    "D": 144
+    "D": 146
   },
-  "countable": 209,
+  "countable": 211,
   "queue": {
     "pending": 105
   },
@@ -23,5 +23,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "LinkedIn agent batch 1 applied"
+  "note": "LinkedIn second pass (batch 1) applied"
 }
