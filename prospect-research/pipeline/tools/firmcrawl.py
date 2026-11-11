@@ -69,6 +69,10 @@ def crawl_conn() -> sqlite3.Connection:
     CRAWL_DB.parent.mkdir(parents=True, exist_ok=True)
     c = sqlite3.connect(str(CRAWL_DB), check_same_thread=False, timeout=60)
     c.row_factory = sqlite3.Row
+    try:
+        c.execute("PRAGMA journal_mode=WAL")          # several crawlers and re-readers write this file at once
+    except sqlite3.OperationalError:
+        pass
     c.execute("""CREATE TABLE IF NOT EXISTS pages (url TEXT PRIMARY KEY, host TEXT, slug TEXT, status INTEGER, fetched TEXT,
                  name TEXT, role TEXT, tels TEXT, linkedin TEXT, city TEXT, regions TEXT, origin TEXT, sentence TEXT,
                  has_years INTEGER, lived INTEGER, text_len INTEGER)""")
