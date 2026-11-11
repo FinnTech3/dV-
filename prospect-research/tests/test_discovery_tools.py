@@ -65,3 +65,15 @@ def test_refresh_titles_upgrades_in_place_and_keeps_linkedin(conn, settings, tmp
     assert row["occupation"] == "Counsel, Example Firm" and row["occupation_level"] == "STRONG" and row["linkedin_url"]
     crawl.execute("UPDATE pages SET role='Example Firm'")                     # a firm name is not a title
     assert discover.refresh_titles(conn, settings, crawl) == []
+
+
+def test_linkprobe_keeps_person_style_links_and_drops_service_pages():
+    from pipeline.tools import linkprobe
+    page = ('<a href="/people/jane-example">Jane Example</a><a href="/people/contact-persons">Contacts</a>'
+            '<a href="/people/page.pdf">x</a><a href="https://other.example.org/people/john-example">elsewhere</a>'
+            '<a href="/people/?page=2">next</a>')
+    got = linkprobe.links(page, "https://example.com/people/", "example.com")
+    urls = [u for u, _ in got]
+    assert "https://example.com/people/jane-example" in urls                      # same host
+    assert not any("other.example.org" in u or u.endswith(".pdf") for u in urls)      # never leaves the host, skips documents
+    assert linkprobe.NOT_PERSON.search("/people/contact-persons") and not linkprobe.NOT_PERSON.search("/people/jane-example")
