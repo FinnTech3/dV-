@@ -439,3 +439,23 @@ def test_only_pass_counts_towards_target(conn, settings):
     assert "evidence-graded prospects" in md and "A+B subtotal" in md
     assert conn.execute("SELECT COUNT(*) FROM persons WHERE status='PASS' AND (phone_level NOT IN ('STRONG','MODERATE') "
                         "OR 'NONE' IN (prev_res_level, prev_emp_level, cur_res_level, occupation_level))").fetchone()[0] == 0
+
+
+# the recorded user waiver: a shared office number may satisfy the telephone gate, clearly labelled, never in the CRM column
+def test_shared_office_number_waiver_is_explicit_labelled_and_never_exported(conn, settings, template, tmp_path):
+    cand = lambda: make(phone_type="switchboard", phone_raw="+34 911 234 567")
+    assert ingest(conn, settings, cand())["status"] == "ASK"                              # strict rules: not countable
+    settings["waivers"] = {"accept_shared_office_number": True}
+    res = ingest(conn, settings, make(phone_type="switchboard", phone_raw="+34 911 234 568"))
+    assert res["status"] == "PASS" and "waiver" in res["reason"]
+    row = conn.execute("SELECT phone_type, phone_level, crm_export_hold FROM persons WHERE uuid=?", (res["uuid"],)).fetchone()
+    assert row["phone_type"] == "shared_switchboard" and row["phone_level"] == "WEAK"       # the stored evidence level is not upgraded
+    assert "not a confirmed mobile" in row["crm_export_hold"]
+    fake_real(conn)
+    assert render.export(conn, template, tmp_path / "o.xlsx", settings)["rows_written"] == 0   # never in the Mobile Number column
+    noph = ingest(conn, settings, make({"phone": "NONE"}, phone_raw=None))
+    assert noph["status"] == "REJECT"                                                      # no number at all is still rejected
+    nolink = ingest(conn, settings, make(phone_type="switchboard", phone_raw="+34 911 234 569", linkedin_url=None))
+    assert nolink["status"] == "ASK" and "INCOMPLETE RESERVE" in nolink["reason"]            # LinkedIn gate not waived
+    uk = ingest(conn, settings, make(phone_type="switchboard", phone_raw="+34 911 234 570", cur_res_country="GB"))
+    assert uk["status"] == "REJECT"                                                         # residence gate not waived

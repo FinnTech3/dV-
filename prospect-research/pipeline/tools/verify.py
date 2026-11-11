@@ -250,7 +250,11 @@ def classify(cand: dict, levels: dict[str, str], settings: dict, duplicate_of: s
             asks.append(f"unresolved contradiction on {crit}")
         elif lv == NONE:
             asks.append(f"no usable evidence for {crit}")
-    if levels.get("phone") == WEAK or cand.get("phone_type") == "shared_switchboard":
+    waived = (settings.get("waivers", {}).get("accept_shared_office_number") and cand.get("phone_type") == "shared_switchboard"
+              and cand.get("phone_e164") and cand.get("phone_valid", True))
+    if waived:
+        levels = dict(levels, phone=MODERATE)      # graded as MODERATE only because of the recorded user waiver; stored evidence stays WEAK
+    elif levels.get("phone") == WEAK or cand.get("phone_type") == "shared_switchboard":
         asks.append("telephone attribution below MODERATE (organisation-level or shared number)")
     if not cand.get("phone_valid", True):
         asks.append("telephone number failed validation")
@@ -266,5 +270,5 @@ def classify(cand: dict, levels: dict[str, str], settings: dict, duplicate_of: s
             result["grade"] = g              # valid on every other test; waiting only for a profile URL
         return result
 
-    result.update(status="PASS", grade=g, reason=f"PASS grade {g}", countable=True)
+    result.update(status="PASS", grade=g, reason=f"PASS grade {g}" + (" (shared office number accepted under the recorded user waiver)" if waived else ""), countable=True)
     return result

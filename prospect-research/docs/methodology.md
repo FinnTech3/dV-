@@ -64,3 +64,14 @@ Reliability classes: PRIMARY, REPUTABLE_SECONDARY, AGGREGATOR, UNVERIFIED. Publi
 
 ## Contact restrictions
 Defaults: route `cold`, objection `unknown`, do-not-contact `unknown`. Absence of an objection is never recorded as consent. Suppressed people leave the countable pool and every export.
+
+
+## Recorded waiver: shared office numbers (2026-11-11)
+
+When the reachable sources ran dry the project lead was offered the choice of keeping every rule or loosening one, and answered "anything to get the valid people". The single loosening applied is recorded in `pipeline/config/settings.json` under `waivers`:
+
+- A valid telephone number printed on the person's **own firm profile page** but shared with other staff may satisfy the telephone gate.
+- The stored evidence level stays WEAK; only the classification step treats the gate as met, and the record's reason text says so.
+- These people are labelled "shared office number" in every list and report, are counted and reported separately from people with a personal number, and **never** go in the CRM `Mobile Number` column (the export still allows confirmed mobiles only).
+- Not waived: LinkedIn URL, UK/IE/NL work history, current mainland EU/CH residence, the financial-adviser exclusion, the A-D grading rules (D still needs two STRONG criteria), and every conduct limit (no LinkedIn scraping, no guessing, no evading blocks, no paid services).
+- Switching it off: set `waivers.accept_shared_office_number` to false and call `discover.revoke_waiver(conn)`, which returns those records to ASK.

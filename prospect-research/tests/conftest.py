@@ -43,7 +43,9 @@ def make(levels: dict | None = None, **overrides) -> dict:
 
 @pytest.fixture
 def settings():
-    return db.load_settings()
+    s = db.load_settings()
+    s["waivers"] = {}          # tests describe the strict rules unless a test turns a waiver on
+    return s
 
 
 @pytest.fixture

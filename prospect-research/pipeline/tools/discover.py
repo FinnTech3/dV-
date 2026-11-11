@@ -169,6 +169,39 @@ def set_linkedin(conn: sqlite3.Connection, person_uuid: str, url: str, captured_
     return "PASS" if only_missing else row["status"]
 
 
+def regrade_waived(conn: sqlite3.Connection, settings: dict, only_uuids: set[str] | None = None, dry_run: bool = False) -> list[dict]:
+    """Re-grade ASK records whose only problem was a shared office number, under the recorded waiver."""
+    from . import verify as _v
+    out = []
+    for row in conn.execute("SELECT * FROM persons WHERE status='ASK' AND phone_type='shared_switchboard' AND suppressed=0 "
+                            "AND status_reason LIKE '%telephone attribution below MODERATE%'").fetchall():
+        if only_uuids is not None and row["uuid"] not in only_uuids:
+            continue
+        cand = dict(row)
+        cand["phone_valid"] = True
+        levels = {"prev_residence": row["prev_res_level"], "prev_employment": row["prev_emp_level"], "cur_residence": row["cur_res_level"],
+                  "occupation": row["occupation_level"], "phone": row["phone_level"]}
+        res = _v.classify(cand, levels, settings)
+        out.append({"uuid": row["uuid"], "name": f"{row['first_name']} {row['last_name']}", "firm": row["employer"], "status": res["status"],
+                    "grade": res["grade"], "reserve": res["reserve"], "reason": res["reason"]})
+        if not dry_run and res["status"] in ("PASS", "ASK"):
+            hold = phone.crm_hold_reason(row["phone_type"], res["grade"], settings) if res["grade"] else None
+            conn.execute("UPDATE persons SET status=?, grade=?, status_reason=?, reserve=?, crm_export_hold=? WHERE uuid=?",
+                         (res["status"], res["grade"], res["reason"], res["reserve"], hold, row["uuid"]))
+    conn.commit()
+    return out
+
+
+def revoke_waiver(conn: sqlite3.Connection) -> int:
+    """Undo regrade_waived: shared-office-number records that only passed under the waiver go back to ASK."""
+    cur = conn.execute("UPDATE persons SET status='ASK', "
+                       "status_reason='telephone attribution below MODERATE (organisation-level or shared number); waiver revoked', "
+                       "grade=CASE WHEN reserve=1 THEN grade ELSE NULL END "
+                       "WHERE phone_type='shared_switchboard' AND status IN ('PASS','ASK') AND (status_reason LIKE '%recorded user waiver%' OR reserve=1)")
+    conn.commit()
+    return cur.rowcount
+
+
 def suppress(conn: sqlite3.Connection, person_uuid: str, basis: str = "individual asked not to be contacted") -> None:
     """Mark a person as not to be contacted: removed from the countable pool and from every export."""
     conn.execute("""UPDATE persons SET suppressed = 1, do_not_contact = 'yes', contact_objection = 'yes',

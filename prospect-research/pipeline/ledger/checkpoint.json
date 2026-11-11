@@ -1,18 +1,18 @@
 {
-  "written": "2026-11-11T09:13:19Z",
+  "written": "2026-11-11T09:20:33Z",
   "target": 1000,
-  "remaining": 789,
+  "remaining": 778,
   "persons_by_status": {
-    "ASK": 297,
+    "ASK": 286,
     "DUPLICATE": 1,
-    "PASS": 211,
+    "PASS": 222,
     "REJECT": 8
   },
   "pass_by_grade": {
     "C": 65,
-    "D": 146
+    "D": 157
   },
-  "countable": 211,
+  "countable": 222,
   "queue": {
     "pending": 105
   },
@@ -23,5 +23,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "Latham crawl complete; 2 added"
+  "note": "Recorded waiver: shared office numbers may satisfy the phone gate (labelled, never exported to Mobile Number)"
 }
