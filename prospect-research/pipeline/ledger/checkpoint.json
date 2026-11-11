@@ -1,18 +1,18 @@
 {
-  "written": "2026-11-10T22:33:01Z",
+  "written": "2026-11-11T07:51:53Z",
   "target": 1000,
-  "remaining": 811,
+  "remaining": 809,
   "persons_by_status": {
-    "ASK": 296,
+    "ASK": 308,
     "DUPLICATE": 1,
-    "PASS": 189,
-    "REJECT": 3
+    "PASS": 191,
+    "REJECT": 8
   },
   "pass_by_grade": {
     "C": 61,
-    "D": 128
+    "D": 130
   },
-  "countable": 189,
+  "countable": 191,
   "queue": {
     "pending": 105
   },
@@ -23,5 +23,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "Latham crawl stopped at time limit; 3 new ingested"
+  "note": "Routes tested 11 Nov: announcement mining, academic CVs, BCG, open-data seed, team-page segmentation; 248 valid"
 }
