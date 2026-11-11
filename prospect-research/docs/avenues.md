@@ -32,5 +32,14 @@ Executive search (useful: consultants have international careers), patent and tr
 - German "Impressum" pages: sole traders must publish name, address and phone, usually beside an "about me" career history. Discovery would start from translator and interpreter association directories.
 - The European Patent Office register of professional representatives.
 
+## 7. Member directories as a source of organisations (SNOWBALL), added 11 November
+**Idea.** A bilateral chamber's directory lists companies that chose to be associated with the UK, Ireland or the Netherlands. Those companies' own websites sometimes publish founder and team pages with direct contact details. The directory is the seed; the company's sitemap is the retrieval route.
+**Method.** `snowball.py` extracts external member sites from eight directory pages, probes each site's sitemap for people pages, and registers every site as an organisation. Sites with people pages go to the same crawler as the firm directories. See `handoff_merge.md`.
+**Result.** 604 member sites found; 46 expose at least two people pages. Most of those are accountancy or tax firms (ambiguous occupation, so they would be `ASK`), firms already crawled, or Swiss and French law firms not reached before. Outcome of the crawl is in the status report.
+
+## 8. Member biographies (Dutch Business Club Spain), added 11 November
+**Idea.** A club that publishes short biographies of its members is publishing residence and career evidence voluntarily.
+**Result.** About 30 members, each with a biography page and the member's own LinkedIn link. Biographies state current residence (often the year of the move) and past steps in the Netherlands. No phone numbers. Six members were recorded as a phone-completion reserve; none qualifies, because the members' own websites either print only a company number, print two numbers without naming whose, or refuse automated access.
+
 ## What limits the total
 In order of effect: (1) the number must be the person's alone; (2) there must be evidence of past work, not just study or a qualification, in an origin country; (3) most people with that history have not left. Relaxing (1) to accept an office number would add roughly 180 people immediately and open up avenue 3.

@@ -38,6 +38,7 @@ class FetchResult:
     blocked: bool = False
     reason: str = ""
     injection_flags: list[str] = field(default_factory=list)
+    html: str = ""
 
 
 def host_forbidden(url: str, settings: dict) -> bool:
@@ -86,7 +87,7 @@ def _default_opener(settings: dict):
     return opener
 
 
-def fetch(url: str, settings: dict, opener=None, sleep=time.sleep) -> FetchResult:
+def fetch(url: str, settings: dict, opener=None, sleep=time.sleep, keep_html: bool = False) -> FetchResult:
     """Retrieve one public page. `opener(url) -> (status, body)` is injectable for tests."""
     if host_forbidden(url, settings):
         return FetchResult(url, False, blocked=True, reason="forbidden host (no scraping of this site)")
@@ -110,7 +111,7 @@ def fetch(url: str, settings: dict, opener=None, sleep=time.sleep) -> FetchResul
     text = to_text(body)
     if len(text) < 600 and _CAPTCHA.search(text):
         return FetchResult(url, False, status=status, blocked=True, reason="challenge/captcha page; not evaded")
-    return FetchResult(url, True, status=status, text=text, injection_flags=flag_injection(text))
+    return FetchResult(url, True, status=status, text=text, injection_flags=flag_injection(text), html=body if keep_html else "")
 
 
 def reset_state() -> None:

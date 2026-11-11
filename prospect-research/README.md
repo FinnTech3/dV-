@@ -4,17 +4,17 @@ A local-first research system for a supervised trainee exercise. It discovers pu
 
 **It does not contact anyone.** It researches and records.
 
-## Current state (10 November 2026)
+## Current state (11 November 2026)
 
 | Item | State |
 |---|---|
 | Tooling, database, queue, exporter | Built |
-| Synthetic test suite | 74 tests passing (`docs/tool_tests.md`) |
+| Synthetic test suite | 80 tests passing (`docs/tool_tests.md`) |
 | Supplied workbook | Inspected; headings only, no existing prospects; working copy verified byte-identical |
 | City selection and directory research | Provisional (`docs/plan/plan.md`) |
-| Five-by-five companies, connector organisations, events | Queued, not yet researched |
-| Person-level research | **Not started: compliance approval has not been recorded** (`docs/compliance_gate.md`) |
-| Countable prospects | 0 of 1,000 |
+| Research library merged from the combined handoff | 476 queries, 48 organisations, 98 events, 433 employer seeds, 20 markets (`docs/handoff_merge.md`) |
+| Person-level research | Running under the approval recorded on 10 November 2026 (local, git-ignored file; see `docs/compliance_gate.md`). Prospect data stays local |
+| Valid prospects | See `pipeline/ledger/checkpoint.json` (counts only). Short of 1,000; reasons in `docs/avenues.md` |
 
 ## What the grades mean
 

@@ -1,18 +1,18 @@
 {
-  "written": "2026-11-10T22:12:05Z",
+  "written": "2026-11-10T22:33:01Z",
   "target": 1000,
-  "remaining": 812,
+  "remaining": 811,
   "persons_by_status": {
-    "ASK": 294,
+    "ASK": 296,
     "DUPLICATE": 1,
-    "PASS": 188,
+    "PASS": 189,
     "REJECT": 3
   },
   "pass_by_grade": {
     "C": 61,
-    "D": 127
+    "D": 128
   },
-  "countable": 188,
+  "countable": 189,
   "queue": {
     "pending": 105
   },
@@ -23,5 +23,5 @@
     "source": "five-by-five industries and significant companies",
     "next_action": "research and record in docs/plan"
   },
-  "note": "chaplaincy avenue tested; firm crawl ingest"
+  "note": "Latham crawl stopped at time limit; 3 new ingested"
 }

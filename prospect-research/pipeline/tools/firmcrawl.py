@@ -73,6 +73,7 @@ def crawl_conn() -> sqlite3.Connection:
                  name TEXT, role TEXT, tels TEXT, linkedin TEXT, city TEXT, regions TEXT, origin TEXT, sentence TEXT,
                  has_years INTEGER, lived INTEGER, text_len INTEGER)""")
     c.execute("CREATE TABLE IF NOT EXISTS hosts (host TEXT PRIMARY KEY, state TEXT, note TEXT)")
+    c.execute("CREATE TABLE IF NOT EXISTS host_meta (host TEXT PRIMARY KEY, label TEXT, channel TEXT, discovered_from TEXT)")
     c.commit()
     return c
 
@@ -171,10 +172,10 @@ def _prefer(urls: list[str]) -> list[str]:
     return sorted(best.values())
 
 
-def crawl_host(host: str, limit: int | None = None, delay: float = 2.0) -> None:
+def crawl_host(host: str, limit: int | None = None, delay: float = 2.0, pat: str | None = None) -> None:
     conn = crawl_conn()
     try:
-        urls = _prefer(probe_urls(host))
+        urls = _prefer(probe_urls(host, pat) if pat else probe_urls(host))
     except Exception as exc:
         with _lock:
             conn.execute("INSERT OR REPLACE INTO hosts VALUES (?,?,?)", (host, "error", str(exc)[:200])); conn.commit()
@@ -214,8 +215,12 @@ def crawl_host(host: str, limit: int | None = None, delay: float = 2.0) -> None:
         conn.execute("INSERT OR REPLACE INTO hosts VALUES (?,?,?)", (host, "done", f"{len(todo)} fetched")); conn.commit()
 
 
-def crawl(hosts: list[str], limit: int | None = None) -> None:
-    threads = [threading.Thread(target=crawl_host, args=(h, limit), daemon=True) for h in hosts]
+SMALL_SITE_PAT = (r"/(people|lawyers|professionals|team|our-team|the-team|meet-the-team|team-members|our-people|experts|profiles?|consultants?|advisors?|advisers?|"
+                  r"attorneys|staff|partners|agents?|anwaelte|avocats?|person|mitarbeiter|equipo|equipe|equipa|ons-team|over-ons|medewerkers|about-us/team|about/team)/[^/?]+")
+
+
+def crawl(hosts: list[str], limit: int | None = None, pat: str | None = None) -> None:
+    threads = [threading.Thread(target=crawl_host, args=(h, limit, 2.0, pat), daemon=True) for h in hosts]
     for t in threads:
         t.start()
     for t in threads:
@@ -286,6 +291,7 @@ def stage(settings: dict, out_dir: Path | None = None) -> dict:
     stats = {"pages": len(rows), "no_origin_history": 0, "no_phone": 0, "office_not_eligible": 0, "present_tense_origin": 0,
              "shared_number_only": 0, "staged": 0}
     batches: dict[str, list] = {}
+    meta = {m["host"]: (m["label"], m["channel"]) for m in conn.execute("SELECT * FROM host_meta")}
     for r in rows:
         tels = json.loads(r["tels"] or "[]")
         if not r["origin"] or not r["sentence"]:
@@ -299,7 +305,7 @@ def stage(settings: dict, out_dir: Path | None = None) -> dict:
             stats["present_tense_origin"] += 1; continue
         own = [t for t in tels if seen[t["e164"]] == 1]
         chosen = next((t for t in own if t["label"] == "mobile"), own[0] if own else None)
-        firm = FIRMS.get(r["host"], r["host"])
+        firm = meta.get(r["host"], (None,))[0] or FIRMS.get(r["host"], r["host"])
         years = YEAR.findall(r["sentence"])
         place = PLACE.search(r["sentence"]).group(1)
         ev = lambda c, lv, ext, lim, **kw: {"criterion": c, "level": lv, "source_url": r["url"], "organisation": firm, "reliability": "PRIMARY",
@@ -341,7 +347,7 @@ def stage(settings: dict, out_dir: Path | None = None) -> dict:
         batches.setdefault(r["host"], []).append(cand)
         stats["staged"] += 1
     for host, cands in batches.items():
-        payload = {"batch_id": "FIRM-" + re.sub(r"^www\.", "", host).split(".")[0], "channel": SECTOR.get(host, "law firm people directory"), "source": FIRMS.get(host, host),
+        payload = {"batch_id": "FIRM-" + re.sub(r"^www\.", "", host).split(".")[0], "channel": (meta.get(host, (None, None))[1] or SECTOR.get(host, "law firm people directory")), "source": FIRMS.get(host, host),
                    "country": "multi", "city": "multi", "candidates": cands}
         (out_dir / f"{payload['batch_id']}.json").write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     return stats

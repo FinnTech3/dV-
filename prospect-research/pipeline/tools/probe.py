@@ -31,13 +31,13 @@ def probe(host, pat=r"/(people|lawyers|professionals|team|our-people|experts|anw
     allowed = [u for u in urls if rp.can_fetch(UA, u)]
     out.update(sitemaps=len(seen), people_urls=len(urls), allowed=len(allowed), sample=sorted(allowed)[:2])
     return out
-def probe_urls(host, pat=r"/(people|lawyers|professionals|team|our-people|experts|profiles?|consultants?|advisors?|attorneys(-professionals/profile)?|bio-broker|agents?|anwaelte(/detail)?|avocats?|person|faculty(-research)?(/faculty)?(/faculty-directory)?(/[a-z-]+)?)/[^/?]+"):
-    """All robots-allowed people-profile URLs listed in a host's sitemaps."""
+def probe_urls(host, pat=r"/(people|lawyers|professionals|team|our-people|experts|profiles?|consultants?|advisors?|attorneys(-professionals/profile)?|bio-broker|agents?|anwaelte(/detail)?|avocats?|person|faculty(-research)?(/faculty)?(/faculty-directory)?(/[a-z-]+)?)/[^/?]+", max_maps=120):
+    """All robots-allowed people-profile URLs listed in a host's sitemaps (max_maps caps the sitemap files read)."""
     _, robots = get(f"https://{host}/robots.txt")
     rp = urllib.robotparser.RobotFileParser(); rp.parse(robots.splitlines())
-    maps = re.findall(r"(?im)^sitemap:\s*(\S+)", robots) or [f"https://{host}/sitemap.xml"]
+    maps = re.findall(r"(?im)^sitemap:\s*(\S+)", robots) or [f"https://{host}/{x}" for x in ("sitemap.xml", "wp-sitemap.xml", "sitemap_index.xml")]
     urls, seen, queue = set(), set(), list(maps)
-    while queue and len(seen) < 120:
+    while queue and len(seen) < max_maps:
         m = queue.pop(0)
         if m in seen: continue
         seen.add(m)
